@@ -45,6 +45,12 @@ next-env.d.ts
 # firebase
 /.firebase/
 /.firebaserc
+firestore.rules
+firestore.indexes.json
+firebase.json
+database.ts
 
 # other
 /config/
+/utils/
+/pages/api/
