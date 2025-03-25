@@ -2,7 +2,6 @@
 import { auth, firebaseConfig } from '@/database';
 import { getApps, initializeApp } from 'firebase/app';
 import { doc, getFirestore, setDoc, getDoc, getDocs, collection, deleteDoc, updateDoc, writeBatch } from 'firebase/firestore';
-import { getStorage, listAll, ref, deleteObject } from 'firebase/storage';
 import React, { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogTitle } from './ui/dialog';
 import { Input } from './ui/input';
@@ -15,45 +14,14 @@ import { onAuthStateChanged, getAuth } from 'firebase/auth';
 import { Textarea } from './ui/textarea';
 import { SelectValue } from '@radix-ui/react-select';
 import { Map, Marker, MapType, ColorScheme, FeatureVisibility } from 'mapkit-react';
-import { NavigationMenu, NavigationMenuContent, NavigationMenuIndicator, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger, NavigationMenuViewport } from "@/components/ui/navigation-menu"
+import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger, NavigationMenuViewport } from "@/components/ui/navigation-menu"
+import getRandomId from '@/utils/getRandomId';
+import handleDelete from '@/utils/dataHandler';
 
 if (!getApps().length) {
   initializeApp(firebaseConfig);
 }
 const db = getFirestore();
-const storage = getStorage();
-
-const generateRandomId = () => {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ123456789';
-  let id = '';
-  const randomValues = new Uint8Array(10);
-  crypto.getRandomValues(randomValues);
-  
-  for (let i = 0; i < 10; i++) {
-    id += chars[randomValues[i] % chars.length];
-  }
-  
-  return id;
-};
-
-const deleteCollection = async (collectionRef:any) => {
-  const querySnapshot = await getDocs(collectionRef);
-  const batch = writeBatch(db);
-  querySnapshot.forEach((doc) => {
-    batch.delete(doc.ref);
-  });
-  await batch.commit();
-};
-
-const renameStorageFolder = async (oldPath:string, newPath:string) => {
-  const listRef = ref(storage, oldPath);
-  const listResult = await listAll(listRef);
-  for (const itemRef of listResult.items) {
-    const newRef = ref(storage, newPath + itemRef.name);
-    await deleteObject(itemRef);
-    // Note: Firebase Storage does not support renaming directly, so you would need to download and re-upload the files to the new path if needed.
-  }
-};
 
 const fetchCoordinates = async (city: string) => {
   const response = await fetch(`https://nominatim.openstreetmap.org/search?city=${city}&country=Germany&format=json`);
@@ -137,7 +105,7 @@ export const ModuleDialog = ({ isOpen, onClose, productId, refreshModules }: { i
     const handleSave = async () => {
       setLoading(true);
       try {
-        const id = generateRandomId();
+        const id = getRandomId();
         await setDoc(doc(db, `product/${productId}/modules`, id), {
           name,
           type,
@@ -230,7 +198,6 @@ export const EditProductDialog = ({ isOpen, onClose, product, refreshProduct }: 
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const router = useRouter();
-  const auth = getAuth();
 
   const handleSave = async () => {
     setLoading(true);
@@ -245,24 +212,11 @@ export const EditProductDialog = ({ isOpen, onClose, product, refreshProduct }: 
     }
   };
 
-  const handleDelete = async () => {
+  const handleDeleteProduct = async (productId: string) => {
     setDeleteLoading(true);
     try {
-      const user = auth.currentUser;
-      if (user) {
-        const productRef = doc(db, 'product', product.id);
-        const modulesRef = collection(db, `product/${product.id}/modules`);
-        
-        await deleteCollection(modulesRef);
-        
-        await deleteDoc(productRef);
-        
-        await renameStorageFolder(`PDF/${product.id}/`, `PDF/delete-${product.id}/`);
-        
-        router.push('/dashboard');
-      } else {
-        console.error('User not authenticated');
-      }
+      await handleDelete(productId);
+      router.push('/dashboard/');
     } catch (error) {
       console.error('Error deleting product: ', error);
     } finally {
@@ -286,7 +240,7 @@ export const EditProductDialog = ({ isOpen, onClose, product, refreshProduct }: 
         />
         <DialogFooter className='flex w-full mt-4'>
           {confirmDelete ? (
-            <Button variant='destructive' onClick={handleDelete} disabled={deleteLoading}>
+            <Button variant='destructive' onClick={() => handleDeleteProduct(product.id)} disabled={deleteLoading}>
               {deleteLoading ? 'Löschen...' : 'Löschen'}
             </Button>
           ) : (

@@ -24,20 +24,12 @@ import { DndContext, closestCenter } from '@dnd-kit/core';
 import { arrayMove, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import getRandomId from "@/utils/getRandomId";
 
 if (!getApps().length) {
   initializeApp(firebaseConfig);
 }
 const db = getFirestore();
-
-const generateRandomId = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789';
-    let result = '';
-    for (let i = 0; i < 8; i++) {
-      result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return result;
-};
 
 interface RecipientsConfiguratorProps {
     isOpen: boolean;
@@ -65,7 +57,7 @@ const RecipientsConfigurator = ({ isOpen, onOpenChange, productId, moduleId, onC
     };
 
     const addEmail = () => {
-        const newId = generateRandomId();
+        const newId = getRandomId(undefined, 8);
         setEmails([...emails, { id: newId, email: newEmail, active: true }]);
         setNewEmail('');
         setChangesMade(true);
@@ -191,7 +183,7 @@ const FieldConfigurator = ({ isOpen, onOpenChange, onSave, fieldData, changesMad
     };
 
     const handleSave = () => {
-        onSave({ id: fieldData?.id || generateRandomId(), type: fieldType, label: fieldLabel, placeholder, required: isRequired, sort: fieldData?.sort || 0, options: dropdownOptions });
+        onSave({ id: fieldData?.id || getRandomId(undefined, 8), type: fieldType, label: fieldLabel, placeholder, required: isRequired, sort: fieldData?.sort || 0, options: dropdownOptions });
         onOpenChange(false);
     };
 
@@ -313,7 +305,7 @@ const FormularmodulEditor = ({ id, productId, onChangesSaved }: { id: string, pr
     };
 
     const addField = (field: Field) => {
-        setFields([...fields, { ...field, id: generateRandomId(), sort: fields.length + 1 }]);
+        setFields([...fields, { ...field, id: getRandomId(undefined, 8), sort: fields.length + 1 }]);
         setChangesMade(true);
         setFieldToEdit(null);
     };

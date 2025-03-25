@@ -20,10 +20,10 @@ import { Skeleton } from './ui/skeleton';
 import KartenmodulEditor from './editors/KartenmodulEditor';
 import OeffnungszeitenEditor from './editors/OeffnungszeitenEditor';
 import FormularmodulEditor from './editors/Formularmoduleditor';
-import { deleteObject } from 'firebase/storage';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger } from './ui/navigation-menu';
 import TerminalEditor from './editors/TerminalEditor';
+import handleDelete from '@/utils/dataHandler';
 
 if (!getApps().length) {
   initializeApp(firebaseConfig);
@@ -242,14 +242,11 @@ export const ModuleDetails = ({ productId, moduleId }: { productId: string, modu
 
     await deleteDoc(docRef);
   };
-  
-  const handleDelete = async () => {
+
+  const handleDeleteModule = async () => {
     setLoading(true);
     try {
-      const moduleRef = doc(db, `product/${productId}/modules`, moduleId);
-      if (module) {
-        await deleteDocumentWithSubcollections(moduleRef, module.type);
-      }
+      await handleDelete(productId, moduleId);
       toast.success('Module erfolgreich gelöscht');
       router.push(`/dashboard/${productId}/`);
     } catch (error) {
@@ -259,7 +256,6 @@ export const ModuleDetails = ({ productId, moduleId }: { productId: string, modu
       setLoading(false);
     }
   };
-
   const hasChanges = () => {
     if (!module) return false;
     return (
@@ -383,7 +379,7 @@ export const ModuleDetails = ({ productId, moduleId }: { productId: string, modu
 
               <div className='flex w-full justify-between mt-4'>
                 <Button onClick={() => setOpenDialog(false)}>Abbrechen</Button>
-                <Button variant='destructive' onClick={handleDelete}>Löschen</Button>
+                <Button variant='destructive' onClick={handleDeleteModule}>Löschen</Button>
               </div>
             </DialogContent>
           </Dialog>

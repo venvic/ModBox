@@ -211,7 +211,7 @@ const Filialfinder: React.FC<FilialfinderProps> = ({ product, module }) => {
                     </div>
                     {categories.map(category => (
                         <div key={category.id} className='mb-5'>
-                            <h2 className='font-medium flex items-center gap-4'><div className='flex-1 bg-black/10 h-[1px]'/>{category.name}<div className='flex-1 bg-black/10 h-[1px]'/></h2>
+                            <h2 className='font-medium flex items-center gap-4 text-center'><div className='flex-1 bg-black/10 h-[1px]'/><p className='max-w-[65vw]'>{category.name}</p><div className='flex-1 bg-black/10 h-[1px]'/></h2>
                             {filteredObjects.filter(obj => obj.category === category.id).length === 0 && <></>}
                             {filteredObjects.filter(obj => obj.category === category.id).map(obj => (
                                 <div key={obj.id}>

@@ -15,19 +15,11 @@ import { getFirestore, collection, getDocs, setDoc, doc, deleteDoc } from "fireb
 import { initializeApp } from "firebase/app";
 import { firebaseConfig } from '@/database';
 import { FaTrash } from 'react-icons/fa6';
+import getRandomId from '@/utils/getRandomId';
 
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-
-const generateRandomId = () => {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789';
-  let result = '';
-  for (let i = 0; i < 8; i++) {
-    result += chars.charAt(Math.random() * chars.length);
-  }
-  return result;
-};
 
 const KartenmodulEditor = ({ id, productId, onChangesSaved }: { id: string, productId: string, onChangesSaved: () => void }) => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -76,7 +68,7 @@ const KartenmodulEditor = ({ id, productId, onChangesSaved }: { id: string, prod
 
   const handleSave = async () => {
     const newMark = {
-      id: editingMark ? editingMark.id : generateRandomId(),
+      id: editingMark ? editingMark.id : getRandomId(undefined, 8),
       lat,
       lon,
       color,

@@ -27,17 +27,9 @@ import { Toggle } from '../ui/toggle';
 import { Switch } from '../ui/switch';
 import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover';
 import * as allIcons from 'react-icons/fa6';
+import getRandomId from '@/utils/getRandomId';
 
 const db = getFirestore(initializeApp(firebaseConfig));
-
-const generateRandomId = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789';
-    let result = '';
-    for (let i = 0; i < 5; i++) {
-      result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return result;
-};
 
 type Tile = {
     id: string;
@@ -136,7 +128,7 @@ const TilesSheet = React.memo(({ tiles, setTiles, moduleId, productId, onChanges
     };
 
     const handleAddTile = () => {
-        const newTile = { title: '', url: '', isIframe: false, sort: tiles.length + 1, id: generateRandomId(), icon: '' };
+        const newTile = { title: '', url: '', isIframe: false, sort: tiles.length + 1, id: getRandomId(undefined, 5), icon: '' };
         setTiles([...tiles, newTile]);
     };
 

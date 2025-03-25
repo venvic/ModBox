@@ -1,48 +1,24 @@
 'use client'
 import React, { useEffect, useState } from 'react';
-import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
+import { onAuthStateChanged, User } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { auth } from '@/database';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { getFirestore, collection, doc, setDoc, getDocs, getDoc } from 'firebase/firestore';
+import { getFirestore, collection, doc, setDoc, getDocs } from 'firebase/firestore';
 import { initializeApp, getApps } from 'firebase/app';
 import { firebaseConfig } from '@/database';
 import { toast } from 'sonner';
-import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
-import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
 import Statistics from '@/components/statisticsMonitor';
+import getRandomId from '@/utils/getRandomId';
 
 if (!getApps().length) {
   initializeApp(firebaseConfig);
 }
 const db = getFirestore();
 
-const chartConfig = {
-  desktop: {
-    label: "Module",
-    color: "#2563eb",
-  },
-  mobile: {
-    label: "Page views",
-    color: "#0F3DAF",
-  },
-} satisfies ChartConfig
-
-const generateRandomId = (prefix = '') => {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ123456789';
-  let id = '';
-  const randomValues = new Uint8Array(14);
-  crypto.getRandomValues(randomValues);
-  
-  for (let i = 0; i < 14; i++) {
-    id += chars[randomValues[i] % chars.length];
-  }
-  
-  return prefix ? `${prefix}-${id}` : id;
-};
 
 const fetchProductModulesCount = async () => {
   const querySnapshot = await getDocs(collection(db, 'product'));
@@ -75,7 +51,7 @@ const fetchProductPageViews = async () => {
   }
 };
 
-const AddProductDialog = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
+const AddProductDialog = ({ isOpen, onClose, onProductAdded }: { isOpen: boolean, onClose: () => void, onProductAdded: () => void }) => {
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
 
@@ -87,7 +63,7 @@ const AddProductDialog = ({ isOpen, onClose }: { isOpen: boolean, onClose: () =>
 
   const handleSave = async () => {
     try {
-      const id = generateRandomId(slug.substring(0, 3).toUpperCase());
+      const id = getRandomId(slug.substring(0, 3).toUpperCase(), 14);
       await setDoc(doc(db, 'product', id), {
         name,
         slug,
@@ -96,6 +72,7 @@ const AddProductDialog = ({ isOpen, onClose }: { isOpen: boolean, onClose: () =>
 
       setName(''); setSlug('');
       onClose();
+      onProductAdded(); // Trigger refetching products
     } catch (error) {
       toast.error("Error adding document", { description: `${error}` });
     }
@@ -197,6 +174,11 @@ export default function Page() {
     });
   };
 
+  const handleProductAdded = async () => {
+    const productsList = await fetchProducts();
+    setProducts(productsList);
+  };
+
   const filteredProducts = products.filter(product =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -222,10 +204,10 @@ export default function Page() {
               />
               <Button variant='secondary' onClick={() => setIsDialogOpen(true)}>Hinzufügen</Button>
           </div>
-          <AddProductDialog isOpen={isDialogOpen} onClose={() => setIsDialogOpen(false)} />
+          <AddProductDialog isOpen={isDialogOpen} onClose={() => setIsDialogOpen(false)} onProductAdded={handleProductAdded} />
           {!isDialogOpen &&
           <>
-              <div className='w-full border h-fit max-h-[560px] min-h-[420px] mt-10 relative overflow-y-scroll rounded-lg'>
+              <div className='w-full border h-fit min-h-[560px] mt-10 relative overflow-y-scroll rounded-lg'>
                   <table className='min-w-full bg-background text-white'>
                       <thead>
                           <tr>
