@@ -150,10 +150,8 @@ const Kartenmodul: React.FC<KartenModulProps> = ({ product, module }) => {
     }
 
     return (
-        <div className='w-full overflow-hidden p-4 h-fit flex flex-col text-black'>
-            <div className='w-full bg-slate-100 rounded-md shadow px-4 py-3 text-black/80 font-medium text-sm'><h2>{module.description}</h2></div>
-
-            <div className='relative h-[600px] mt-4 w-full rounded-md overflow-hidden'>
+        <div className='w-full overflow-hidden h-fit flex flex-col text-black'>
+            <div className='relative h-[100dvh] w-full overflow-hidden'>
                 <Map 
                     colorScheme={ColorScheme.Auto} 
                     mapType={MapType.Standard} 

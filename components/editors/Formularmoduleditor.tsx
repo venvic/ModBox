@@ -50,6 +50,13 @@ const RecipientsConfigurator = ({ isOpen, onOpenChange, productId, moduleId, onC
         }
     }, [isOpen]);
 
+    useEffect(() => {
+        if (isOpen && emails.length === 0) {
+            setEmails([{ id: getRandomId(undefined, 8), email: "info@cosmema.de", active: true }]);
+            setChangesMade(true);
+        }
+    }, [isOpen, emails]);
+
     const fetchEmails = async () => {
         const querySnapshot = await getDocs(collection(db, `product/${productId}/modules/${moduleId}/recipients`));
         const emailsData = querySnapshot.docs.map(doc => ({ id: doc.id, email: doc.data().email, active: doc.data().active }));

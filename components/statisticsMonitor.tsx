@@ -96,7 +96,7 @@ const Statistics = () => {
             />
             <ChartTooltip content={<ChartTooltipContent />} />
             <ChartLegend content={<ChartLegendContent />} />
-            <Bar dataKey="modulesCount" fill="#6A6D95" radius={3} />
+            <Bar dataKey="Module " fill="#6A6D95" radius={3} />
           </BarChart>
         </ChartContainer>
       </div>

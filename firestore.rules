@@ -3,14 +3,21 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Allow everyone to read from /product but only authorized users can write
     match /product/{document=**} {
       allow read: if true;
       allow write: if request.auth != null;
     }
 
-    // Allow service account to read and write from /statistics
-    match /statistics/{document=**} {
+    match /logs/{document=**} {
+      allow read, write: if request.auth.token.serviceAccount == true;
+    }
+    
+    match /global/settings {
+      allow read: if request.auth != null;
+      allow write: if request.auth.token.serviceAccount == true;
+    }
+
+    match /global/{document=**} {
       allow read, write: if request.auth.token.serviceAccount == true;
     }
 

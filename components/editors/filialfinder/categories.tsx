@@ -96,18 +96,18 @@ const CategoriesEditor = ({ categories, setCategories, moduleId, productId, onCh
         <SheetTrigger asChild>
           <Button variant="secondary" onClick={() => setIsSheetOpen(true)}>Kategorien</Button>
         </SheetTrigger>
-        <SheetContent className="min-w-[90dvw] md:min-w-[500px]">
+        <SheetContent className="min-w-[90dvw] md:min-w-[500px] flex flex-col">
           <SheetHeader>
             <SheetTitle className='text-white'>Kategorien bearbeiten</SheetTitle>
             <SheetDescription className='text-neutral-300'>Bearbeiten Sie die Kategorien</SheetDescription>
           </SheetHeader>
           <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEndCategories}>
             <SortableContext items={categories} strategy={verticalListSortingStrategy}>
-              <div className='flex h-[calc(100%-100px)] flex-col gap-4 mt-10'>
+              <div className='flex-1 overflow-y-auto mt-10'>
                 {categories.map((category, index) => (
                   <SortableItem key={category.id} id={category.id}>
                     {(listeners: any) => (
-                      <div className='flex gap-2 items-center overflow-y-scroll'>
+                      <div className='flex gap-2 items-center mt-2'>
                         <span className='handle text-white' {...listeners}><FaGrip /></span>
                         <Input
                           value={category.name}
@@ -125,10 +125,12 @@ const CategoriesEditor = ({ categories, setCategories, moduleId, productId, onCh
                     )}
                   </SortableItem>
                 ))}
-                <div className='flex flex-col mt-auto gap-3'>
-                  <Button variant="outline" className='text-white' onClick={handleAddCategory}><span className='text-lg mr-1'>+</span> Neue Kategorie</Button>
-                  <Button variant="secondary" onClick={handleSaveChanges}>Änderungen speichern</Button>
-                </div>
+              </div>
+              <div className='flex flex-col gap-3 mt-4'>
+                <Button variant="outline" className='text-white' onClick={handleAddCategory}>
+                  <span className='text-lg mr-1'>+</span> Neue Kategorie
+                </Button>
+                <Button variant="secondary" onClick={handleSaveChanges}>Änderungen speichern</Button>
               </div>
             </SortableContext>
           </DndContext>

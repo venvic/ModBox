@@ -24,6 +24,7 @@ import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger } from './ui/navigation-menu';
 import TerminalEditor from './editors/TerminalEditor';
 import handleDelete from '@/utils/dataHandler';
+import KontaktmodulEditor from './editors/KontaktmodulEditor';
 
 if (!getApps().length) {
   initializeApp(firebaseConfig);
@@ -45,6 +46,8 @@ const getEditorComponent = (productId:string, id:string, type: string, onChanges
       return <FormularmodulEditor id={id} productId={productId} onChangesSaved={onChangesSaved} />;
     case 'Terminal-Modul':
       return <TerminalEditor id={id} productId={productId} onChangesSaved={onChangesSaved} />;
+    case 'Kontakt-Modul':
+      return <KontaktmodulEditor id={id} productId={productId} onChangesSaved={onChangesSaved} />;
     default:
       return <div>Unknown module type</div>;
   }
@@ -187,61 +190,6 @@ export const ModuleDetails = ({ productId, moduleId }: { productId: string, modu
     }
   };
 
-  const deleteCollection = async (collectionRef: any) => {
-    const snapshot = await getDocs(collectionRef);
-    const batch = writeBatch(db);
-    snapshot.forEach(doc => {
-      batch.delete(doc.ref);
-    });
-    await batch.commit();
-  };
-
-  const deleteDocumentWithSubcollections = async (docRef: any, moduleType: string) => {
-    let subcollectionNames: string[] = [];
-  
-    switch (moduleType) {
-      case 'Filialfinder':
-        subcollectionNames = ['categories'];
-        break;
-      case 'Kartenmodul':
-        subcollectionNames = ['marks'];
-        break;
-      case 'PDF-Modul':
-        subcollectionNames = ['files'];
-        break;
-      case 'Offnungszeiten':
-        subcollectionNames = ['times'];
-        break;
-      case 'Formular-Modul':
-        subcollectionNames = ['data', 'recipients'];
-        break;
-      case 'Terminal-Modul':
-        subcollectionNames = ['tiles', 'settings/default'];
-        break;
-      default:
-        console.error('Unknown module type');
-        return;
-    }
-  
-    for (const subcollectionName of subcollectionNames) {
-      const subcollections = await getDocs(collection(docRef, subcollectionName));
-      for (const subcollection of subcollections.docs) {
-        await deleteCollection(collection(docRef, subcollection.id));
-      }
-    }
-
-    // Check if subcollections are deleted
-    for (const subcollectionName of subcollectionNames) {
-      const subcollections = await getDocs(collection(docRef, subcollectionName));
-      if (!subcollections.empty) {
-        for (const subcollection of subcollections.docs) {
-          await deleteCollection(collection(docRef, subcollection.id));
-        }
-      }
-    }
-
-    await deleteDoc(docRef);
-  };
 
   const handleDeleteModule = async () => {
     setLoading(true);

@@ -19,6 +19,9 @@ Zeigt die Öffnungszeiten für jeden Wochentag sowie das Wochenende an. Außerde
 ### 📄 PDF-Modul  
 Ermöglicht das Hochladen und Verwalten einer Liste von PDF-Dateien, die der Nutzer selbst anordnen kann.  
 
+### 📞 Kontaktmodul  
+Gibt Kontaktinformationen wieder wie Ort (über Apple Maps), Email, Fax, Website usw.
+
 ### 🔳 Terminalmodul  
 Eine Kachel-basierte Oberfläche zur Darstellung verschiedener Terminals mit individuellen Webseiten.  
 

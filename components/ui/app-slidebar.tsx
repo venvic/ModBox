@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogTrigger } from "./dialog"
 import { getAuth, onAuthStateChanged } from 'firebase/auth'
 import { getFirestore, collection, getDocs } from 'firebase/firestore'
 import { initializeApp, getApps } from 'firebase/app'
-import { firebaseConfig } from '@/database'
+import { auth, firebaseConfig } from '@/database'
 
 import {
   Sidebar,
@@ -40,9 +40,9 @@ const items = [
     icon: Home,
   },
   {
-    title: "Nutzer verwalten",
-    url: "dashboard/users",
-    icon: Users,
+    title: "ModBox Einstellungen",
+    url: "/dashboard/settings",
+    icon: Settings,
   },
 ]
 
@@ -135,19 +135,8 @@ export function AppSidebar() {
                   <ChevronUp className="ml-auto" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
-              <DropdownMenuContent side="top" className="w-[--radix-popper-anchor-width]">
-                <DropdownMenuItem>
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <span>Settings</span>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <h2>Settings</h2>
-                      {/* Add settings content here */}
-                    </DialogContent>
-                  </Dialog>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
+              <DropdownMenuContent side="top" className="w-[--radix-popper-anchor-width] hover:bg-destructive transition-all cursor-pointer">
+                <DropdownMenuItem className="px-2 py-1 text-destructive-foreground" onClick={() => auth.signOut()}>
                   <span>Logout</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>

@@ -62,6 +62,12 @@ const isCurrentlyOpen = (times: time[]) => {
   return false;
 };
 
+const Uhr = () => {
+    return (
+        <span className="text-xs mt-auto p-0">Uhr</span>
+    )
+}
+
 const Offnungszeiten: React.FC<OffnungszeitenProps> = ({ product, module }) => {
     const [times, setTimes] = React.useState<time[]>([]);
     const [loading, setLoading] = React.useState<boolean>(true);
@@ -113,9 +119,9 @@ const Offnungszeiten: React.FC<OffnungszeitenProps> = ({ product, module }) => {
 
                                 {!time.closed ? (
                                     <div className="w-fit mt-[2px]">
-                                        <span className="flex gap-[6px] text-sm items-center">{time.open} <FaMinus className="h-2 w-2 text-neutral-500"/> {time.close}</span>
+                                        <span className="flex gap-[6px] text-sm items-center">{time.open}<Uhr/> <FaMinus className="h-2 w-2 text-neutral-500"/> {time.close} <Uhr/></span>
                                         {time.break.map((brk, index) => (
-                                            (brk.start !== '00:00' || brk.end !== '00:00') && (<span key={index} className="flex gap-[6px] text-sm items-center">{brk.start}<FaMinus className="h-2 w-2 text-neutral-500"/>{brk.end}</span>)
+                                            (brk.start !== '00:00' || brk.end !== '00:00') && (<span key={index} className="flex gap-[6px] text-sm items-center">{brk.start}<Uhr/><FaMinus className="h-2 w-2 text-neutral-500"/>{brk.end}<Uhr/></span>)
                                         ))}
                                     </div>
                                 ) : (

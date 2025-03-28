@@ -7,21 +7,29 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from "@/components/ui/sheet"
 import { HexColorPicker } from "react-colorful";
 import { toast } from "sonner";
-import { getFirestore, collection, getDocs, setDoc, doc, deleteDoc } from "firebase/firestore";
+import { getFirestore, collection, getDocs, setDoc, doc, deleteDoc, getDoc } from "firebase/firestore";
 import { initializeApp } from "firebase/app";
 import { firebaseConfig } from '@/database';
 import { FaTrash } from 'react-icons/fa6';
 import getRandomId from '@/utils/getRandomId';
-
+import { Dialog, DialogContent, DialogFooter, DialogTitle } from "@/components/ui/dialog";
+import { Map, Marker, MapType, ColorScheme, FeatureVisibility } from 'mapkit-react';
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const KartenmodulEditor = ({ id, productId, onChangesSaved }: { id: string, productId: string, onChangesSaved: () => void }) => {
+  const mapToken = process.env.NODE_ENV === 'production'
+    ? process.env.NEXT_PUBLIC_PROD_MAPKIT_TOKEN || ''
+    : process.env.NEXT_PUBLIC_DEV_MAPKIT_TOKEN || '';
+
+  if (!mapToken) {
+    console.error("MapKit token is missing. Please set NEXT_PUBLIC_PROD_MAPKIT_TOKEN or NEXT_PUBLIC_DEV_MAPKIT_TOKEN in your environment variables.");
+  }
+
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [lat, setLat] = useState('');
   const [lon, setLon] = useState('');
@@ -31,6 +39,9 @@ const KartenmodulEditor = ({ id, productId, onChangesSaved }: { id: string, prod
   const [searchTerm, setSearchTerm] = useState('');
   const [marks, setMarks] = useState<{ id: string, lat: string, lon: string, color: string, name: string, website: string }[]>([]);
   const [editingMark, setEditingMark] = useState<{ id: string, lat: string, lon: string, color: string, name: string, website: string } | null>(null);
+  const [isMapDialogOpen, setIsMapDialogOpen] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<{ latitude: number, longitude: number } | null>(null);
+  const [center, setCenter] = useState<{ latitude: number, longitude: number }>({ latitude: 0, longitude: 0 });
 
   useEffect(() => {
     const fetchMarks = async () => {
@@ -54,6 +65,24 @@ const KartenmodulEditor = ({ id, productId, onChangesSaved }: { id: string, prod
     };
 
     fetchMarks();
+  }, [productId, id]);
+
+  useEffect(() => {
+    const fetchModuleCenter = async () => {
+      try {
+        const moduleDoc = await getDoc(doc(db, `product/${productId}/modules`, id));
+        const moduleData = moduleDoc.exists() ? moduleDoc.data() : null;
+        if (moduleData?.center) {
+          setCenter(moduleData.center);
+        } else {
+          console.warn("Center point not found in module data. Defaulting to { latitude: 0, longitude: 0 }.");
+        }
+      } catch (error) {
+        toast.error("Fehler beim Laden des Moduls", { description: String(error) });
+      }
+    };
+
+    fetchModuleCenter();
   }, [productId, id]);
 
   const handleEdit = (mark: { id: string, lat: string, lon: string, color: string, name: string, website: string }) => {
@@ -103,6 +132,14 @@ const KartenmodulEditor = ({ id, productId, onChangesSaved }: { id: string, prod
     }
   };
 
+  const handleMapConfirm = () => {
+    if (selectedLocation) {
+      setLat(selectedLocation.latitude.toString());
+      setLon(selectedLocation.longitude.toString());
+      setIsMapDialogOpen(false);
+    }
+  };
+
   const filteredMarks = marks.filter(mark => mark.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
   return (
@@ -131,7 +168,10 @@ const KartenmodulEditor = ({ id, productId, onChangesSaved }: { id: string, prod
             <SheetDescription>Füllen Sie die folgenden Felder aus, um einen neuen Ort hinzuzufügen.</SheetDescription>
           </SheetHeader>
           <div className='flex h-full flex-col gap-4'>
-            <div className='flex gap-4'>
+            <div className='flex flex-col'>
+              <Button variant="secondary" onClick={() => setIsMapDialogOpen(true)}>Ort wählen</Button>
+            </div>
+            <div className='flex gap-4 items-center'>
               <Input className='text-white placeholder:text-white/40' placeholder='Latitude' value={lat} onChange={(e) => setLat(e.target.value)} />
               <Input className='text-white placeholder:text-white/40' placeholder='Longitude' value={lon} onChange={(e) => setLon(e.target.value)} />
             </div>
@@ -145,6 +185,42 @@ const KartenmodulEditor = ({ id, productId, onChangesSaved }: { id: string, prod
           </div>
         </SheetContent>
       </Sheet>
+
+      <Dialog open={isMapDialogOpen} onOpenChange={setIsMapDialogOpen}>
+        <DialogContent>
+          <DialogTitle className='text-white'>Position auswählen</DialogTitle>
+          <div className='w-full h-96'>
+            {center.latitude !== 0 && center.longitude !== 0 ? (
+              <Map
+                colorScheme={ColorScheme.Dark}
+                mapType={MapType.Standard}
+                token={mapToken}
+                initialRegion={{
+                  centerLatitude: center.latitude,
+                  centerLongitude: center.longitude,
+                  latitudeDelta: 0.1,
+                  longitudeDelta: 0.1,
+                }}
+                onLongPress={(event) => {
+                  const coordinates = event.toCoordinates();
+                  setSelectedLocation({ latitude: coordinates.latitude, longitude: coordinates.longitude });
+                }}
+                showsPointsOfInterest={true}
+                showsCompass={FeatureVisibility.Hidden}
+                showsScale={FeatureVisibility.Hidden}
+              >
+                {selectedLocation && <Marker color='#0FA7AF' latitude={selectedLocation.latitude} longitude={selectedLocation.longitude} />}
+              </Map>
+            ) : (
+              <p className="text-white">Karte wird geladen...</p>
+            )}
+          </div>
+          <DialogFooter className='mt-4'>
+            <Button onClick={() => setIsMapDialogOpen(false)}>Abbrechen</Button>
+            <Button variant='secondary' onClick={handleMapConfirm} disabled={!selectedLocation}>Bestätigen</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

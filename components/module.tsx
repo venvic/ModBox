@@ -1,20 +1,20 @@
 'use client'
 import { auth, firebaseConfig } from '@/database';
 import { getApps, initializeApp } from 'firebase/app';
-import { doc, getFirestore, setDoc, getDoc, getDocs, collection, deleteDoc, updateDoc, writeBatch } from 'firebase/firestore';
+import { doc, getFirestore, setDoc, getDoc, getDocs, collection, updateDoc } from 'firebase/firestore';
 import React, { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogTitle } from './ui/dialog';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger } from './ui/select';
 import { Progress } from './ui/progress';
 import { Button } from './ui/button';
-import { FaCloudBolt, FaOutdent, FaMapLocationDot, FaFilePdf, FaClock, FaClipboardList, FaGear, FaChevronLeft, FaTablet } from "react-icons/fa6";
+import { FaCloudBolt, FaOutdent, FaMapLocationDot, FaFilePdf, FaClock, FaClipboardList, FaGear, FaChevronLeft, FaTablet, FaPhone } from "react-icons/fa6";
 import { useRouter } from 'next/navigation';
-import { onAuthStateChanged, getAuth } from 'firebase/auth';
+import { onAuthStateChanged } from 'firebase/auth';
 import { Textarea } from './ui/textarea';
 import { SelectValue } from '@radix-ui/react-select';
 import { Map, Marker, MapType, ColorScheme, FeatureVisibility } from 'mapkit-react';
-import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger, NavigationMenuViewport } from "@/components/ui/navigation-menu"
+import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger } from "@/components/ui/navigation-menu"
 import getRandomId from '@/utils/getRandomId';
 import handleDelete from '@/utils/dataHandler';
 
@@ -161,6 +161,7 @@ export const ModuleDialog = ({ isOpen, onClose, productId, refreshModules }: { i
                   <SelectItem value='PDF-Modul'>PDF-Modul</SelectItem>
                   <SelectItem value='Offnungszeiten'>Öffnungszeiten</SelectItem>
                   <SelectItem value='Formular-Modul'>Formular Modul</SelectItem>
+                  <SelectItem value='Kontakt-Modul'>Kontakt Modul</SelectItem>
                   <SelectItem value='Terminal-Modul'>Terminal Modul</SelectItem>
                 </SelectContent>
             </Select>
@@ -384,6 +385,8 @@ export const ProductModules = ({ productId }: { productId: string }) => {
         return <FaClipboardList />;
       case 'Terminal-Modul':
         return <FaTablet />;
+      case 'Kontakt-Modul':
+        return <FaPhone />;
       default:
         return null;
     }

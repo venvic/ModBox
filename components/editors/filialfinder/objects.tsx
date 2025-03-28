@@ -217,11 +217,13 @@ const ObjectsEditor = ({ moduleId, productId, categories, onChangesSaved, filter
     };
   
     const handleRemoveObject = (id: string, categoryId: string) => {
-      const updatedObjects = objects.map(obj => 
-        obj.id === id ? { ...obj, isDeleted: true } : obj
-      );
-      setObjects(updatedObjects);
       setDeletedObjects([...deletedObjects, { id, categoryId }]);
+      const updatedObjects = objects.filter(obj => obj.id !== id);
+      const sortedObjects = updatedObjects.map((obj, index) => ({
+        ...obj,
+        sort: obj.category === categoryId ? index + 1 : obj.sort,
+      }));
+      setObjects(sortedObjects);
       setHasChanges(true);
     };
   
@@ -250,10 +252,8 @@ const ObjectsEditor = ({ moduleId, productId, categories, onChangesSaved, filter
         batch.delete(objRef);
       });
       objects.forEach((obj) => {
-        if (!obj.isDeleted) {
-          const objRef = doc(db, `product/${productId}/modules/${moduleId}/categories/${obj.category}/objects`, obj.id);
-          batch.set(objRef, obj);
-        }
+        const objRef = doc(db, `product/${productId}/modules/${moduleId}/categories/${obj.category}/objects`, obj.id);
+        batch.set(objRef, obj);
       });
       await batch.commit();
       setDeletedObjects([]);

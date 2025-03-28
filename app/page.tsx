@@ -10,6 +10,7 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 
 export default function Home() {
   const { register, handleSubmit, formState: { errors } } = useForm();
@@ -29,19 +30,102 @@ export default function Home() {
     }
   };
 
+  const titleAnimation = {
+    hidden: { y: -20, opacity: 0.7, filter: "blur(4px)" },
+    visible: (i: number) => ({
+      y: [0, 10, 0],
+      opacity: 1,
+      filter: "blur(0px)",
+      transition: {
+        delay: i * 0.1,
+        duration: 0.8,
+        ease: "easeOut",
+        repeat: Infinity,
+        repeatDelay: 2.2,
+      },
+    }),
+  };
+
+  const dotAnimation = {
+    animate: {
+      backgroundColor: ["#ffffff1e", "#484DE5", "#ffffff3c"],
+      transition: {
+        duration: 2,
+        repeat: Infinity,
+        repeatDelay: 1,
+        ease: "easeInOut",
+      },
+    },
+  };
+
+  const renderDots = () => {
+    const rows = 35;
+    const cols = 35;
+    const dots = [];
+
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
+        const distanceFromCenter = Math.sqrt(
+          Math.pow(row - rows / 2, 2) + Math.pow(col - cols / 2, 2)
+        );
+        const opacity = Math.max(0.3, 1 - distanceFromCenter / (rows / 2));
+
+        dots.push(
+          <motion.div
+            key={`${row}-${col}`}
+            className="w-[2px] h-[2px] rounded-full bg-white/30"
+            style={{ opacity }}
+            animate={Math.random() > 0.8 ? "animate" : undefined}
+            variants={dotAnimation}
+          />
+        );
+      }
+    }
+
+    return dots;
+  };
+
+  const title = "ModBox";
+
   return (
-    <div className="flex flex-col h-screen justify-between items-center w-full py-14 bg-background text-neutral-100 font-[family-name:var(--font-geist-sans)]">
+    <div className="relative flex flex-col h-screen justify-between items-center w-full py-14 bg-background text-neutral-100 font-[family-name:var(--font-geist-sans)] overflow-hidden">
+      <div
+        className="absolute inset-0 grid pointer-events-none z-0"
+        style={{
+          gridTemplateColumns: "repeat(35, 1fr)",
+          gridTemplateRows: "repeat(35, 1fr)",
+          gap: "0", 
+        }}
+      >
+        {renderDots()}
+      </div>
       {loading && (
         <div className="fixed inset-0 flex items-center justify-center bg-background bg-opacity-75 z-30 backdrop-blur-sm">
           <Progress className="w-1/2 z-50" />
         </div>
       )}
       <main className="flex flex-col p-14 h-full w-full justify-center items-center">
-        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col w-full max-w-[560px]">
+        <div className="flex mb-1">
+          {title.split("").map((letter, index) => (
+            <motion.span
+              key={index}
+              className="text-5xl font-semibold"
+              custom={index}
+              initial="hidden"
+              animate="visible"
+              variants={titleAnimation}
+            >
+              {letter}
+            </motion.span>
+          ))}
+        </div>
+        <p className="mb-6 text-neutral-200/80">All in one module solution</p>
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col w-full max-w-[560px] z-50">
           <Label className="mt-6 mb-2" htmlFor="email">Email</Label>
           <Input
             placeholder="Email"
             type="email"
+            className="bg-background"
             {...register("email", { required: "Email is required" })}
           />
           {errors.email && <p className="text-red-500/70 text-xs mt-1">{String(errors.email.message)}</p>}
@@ -50,6 +134,7 @@ export default function Home() {
           <Input
             placeholder="Passwort"
             type="password"
+            className="bg-background"
             {...register("password", { required: "Password is required" })}
           />
           {errors.password && <p className="text-red-500/70 text-xs mt-1">{String(errors.password.message)}</p>}

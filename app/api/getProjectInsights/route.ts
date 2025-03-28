@@ -19,7 +19,7 @@ const monitoringClient = new MetricServiceClient({
   libName: 'gccl',
   libVersion: '1.0.0',
   projectId: serviceAccount.project_id,
-  keyFilename: path.resolve(__dirname, 'path/to/serviceAccountKey.json'),
+  keyFilename: path.resolve(__dirname, 'config/serviceAccount.json'),
   protoPath: path.resolve(__dirname, 'node_modules/@google-cloud/monitoring/protos/protos.json'),
 });
 
