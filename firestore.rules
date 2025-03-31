@@ -9,7 +9,8 @@ service cloud.firestore {
     }
 
     match /logs/{document=**} {
-      allow read, write: if request.auth.token.serviceAccount == true;
+    	allow read: if request.auth != null;
+      allow write: if request.auth.token.serviceAccount == true;
     }
     
     match /global/settings {
@@ -18,7 +19,8 @@ service cloud.firestore {
     }
 
     match /global/{document=**} {
-      allow read, write: if request.auth.token.serviceAccount == true;
+    	allow read: if request.auth != null;
+      allow write: if request.auth.token.serviceAccount == true;
     }
 
     // Deny all other requests

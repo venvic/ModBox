@@ -7,7 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { getFirestore, collection, doc, setDoc, getDocs } from 'firebase/firestore';
+import { getFirestore, collection, doc, setDoc, getDocs, getDoc } from 'firebase/firestore';
 import { initializeApp, getApps } from 'firebase/app';
 import { firebaseConfig } from '@/database';
 import { toast } from 'sonner';
@@ -43,13 +43,43 @@ const fetchProductPageViews = async () => {
       toast.error("Error fetching page views", { description: `${data.error}` });
       return [];
     }
-    console.log('Page views data:', data); // Add logging
+    console.log('Page views data:', data); 
     return data;
   } catch (error) {
     toast.error("Error fetching page views", { description: `${error}` });
     return [];
   }
 };
+
+
+const fetchUserRights = async () => {
+  try {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error("User not authenticated");
+    }
+
+    const userDocRef = doc(db, 'global', 'users', currentUser.uid, 'info');
+    const userDocSnap = await getDoc(userDocRef);
+
+    if (!userDocSnap.exists()) {
+      return null;
+    }
+
+    const userData = userDocSnap.data();
+    const { projects } = userData;
+
+    if (projects === "all") {
+      return "all";
+    }
+
+    return Array.isArray(projects) ? projects : [];
+  } catch (error) {
+    toast.error("Error fetching user rights", { description: `${error}` });
+    return null;
+  }
+};
+
 
 const AddProductDialog = ({ isOpen, onClose, onProductAdded }: { isOpen: boolean, onClose: () => void, onProductAdded: () => void }) => {
   const [name, setName] = useState('');
@@ -72,7 +102,7 @@ const AddProductDialog = ({ isOpen, onClose, onProductAdded }: { isOpen: boolean
 
       setName(''); setSlug('');
       onClose();
-      onProductAdded(); // Trigger refetching products
+      onProductAdded();
     } catch (error) {
       toast.error("Error adding document", { description: `${error}` });
     }
@@ -117,6 +147,7 @@ export default function Page() {
   const [searchTerm, setSearchTerm] = useState('');
   const [productModulesCount, setProductModulesCount] = useState<{ name: string; slug: string; modulesCount: number }[]>([]);
   const [productPageViews, setProductPageViews] = useState([]);
+  const [grantedProducts, setGrantedProducts] = useState<string[] | "all">([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -149,8 +180,22 @@ export default function Page() {
       const productsList = await fetchProducts();
       const modulesCount = await fetchProductModulesCount();
       const pageViews = await fetchProductPageViews();
+      const grantedProducts = await fetchUserRights();
 
-      setProducts(productsList);
+      if (grantedProducts === null) {
+        return;
+      }
+
+      if (grantedProducts !== "all") {
+        const filteredProducts = productsList.filter(product =>
+          grantedProducts.includes(product.id)
+        );
+        setProducts(filteredProducts);
+      } else {
+        setProducts(productsList);
+      }
+
+      setGrantedProducts(grantedProducts);
       setProductModulesCount(modulesCount);
       setProductPageViews(pageViews);
       setLoading(false);
@@ -195,40 +240,44 @@ export default function Page() {
     <div className='bg-background min-h-screen w-screen flex justify-center'>
       <div className='max-w-[1900px] w-full p-4 md:p-12'>
         <div className='w-full flex gap-10'>
-              <Input
-                type='text'
-                placeholder='Suche...'
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className='w-full text-white placeholder:text-neutral-500'
-              />
-              <Button variant='secondary' onClick={() => setIsDialogOpen(true)}>Hinzufügen</Button>
-          </div>
+          <Input
+            type='text'
+            placeholder='Suche...'
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className='w-full text-white placeholder:text-neutral-500'
+          />
+          {grantedProducts === "all" && (
+            <Button variant='secondary' onClick={() => setIsDialogOpen(true)}>Hinzufügen</Button>
+          )}
+        </div>
+        {grantedProducts === "all" && (
           <AddProductDialog isOpen={isDialogOpen} onClose={() => setIsDialogOpen(false)} onProductAdded={handleProductAdded} />
-          {!isDialogOpen &&
-          <>
-              <div className='w-full border h-fit min-h-[560px] mt-10 relative overflow-y-scroll rounded-lg'>
-                  <table className='min-w-full bg-background text-white'>
-                      <thead>
-                          <tr>
-                          <th className='py-2 px-4 border-b text-left'>Name</th>
-                          <th className='py-2 px-4 border-b text-left'>Slug</th>
-                          </tr>
-                      </thead>
-                      <tbody>
-                          {filteredProducts.map((product) => (
-                              <tr key={product.id} onClick={() => router.push(`/dashboard/${product.id}`)} className='cursor-pointer hover:bg-neutral-700/20'>
-                                  <td className='py-2 px-4 border-b'>{product.name}</td>
-                                  <td className='py-2 px-4 border-b'>{product.slug}</td>
-                              </tr>
-                          ))}
-                      </tbody>
-                  </table>
-              </div>
-              <Statistics />
-            </>
-          }
+        )}
+        {!isDialogOpen &&
+        <>
+          <div className='w-full border h-fit min-h-[560px] mt-10 relative overflow-y-scroll rounded-lg'>
+            <table className='min-w-full bg-background text-white'>
+              <thead>
+                <tr>
+                  <th className='py-2 px-4 border-b text-left'>Name</th>
+                  <th className='py-2 px-4 border-b text-left'>Slug</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredProducts.map((product) => (
+                  <tr key={product.id} onClick={() => router.push(`/dashboard/${product.id}`)} className='cursor-pointer hover:bg-neutral-700/20'>
+                    <td className='py-2 px-4 border-b'>{product.name}</td>
+                    <td className='py-2 px-4 border-b'>{product.slug}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {grantedProducts === "all" && <Statistics />}
+        </>
+        }
       </div>
     </div>
-  )
+  );
 }

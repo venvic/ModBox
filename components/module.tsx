@@ -350,10 +350,12 @@ export const ProductModules = ({ productId }: { productId: string }) => {
     const fetchProducts = async () => {
       try {
         const querySnapshot = await getDocs(collection(db, 'product'));
-        const productsList = querySnapshot.docs.map(doc => {
-          const data = doc.data();
-          return { id: doc.id, name: data.name };
-        });
+        const productsList = querySnapshot.docs
+          .map(doc => {
+            const data = doc.data();
+            return { id: doc.id, name: data.name, allowedUsers: data.allowedUsers || [] };
+          })
+          .filter(product => product.allowedUsers.includes(auth.currentUser?.uid)); // Filter by user access
         setProducts(productsList);
       } catch (error) {
         console.error('Error fetching products: ', error);
