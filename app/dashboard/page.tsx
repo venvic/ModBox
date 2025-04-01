@@ -148,6 +148,7 @@ export default function Page() {
   const [productModulesCount, setProductModulesCount] = useState<{ name: string; slug: string; modulesCount: number }[]>([]);
   const [productPageViews, setProductPageViews] = useState([]);
   const [grantedProducts, setGrantedProducts] = useState<string[] | "all">([]);
+  const [isProductsLoaded, setIsProductsLoaded] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -198,7 +199,7 @@ export default function Page() {
       setGrantedProducts(grantedProducts);
       setProductModulesCount(modulesCount);
       setProductPageViews(pageViews);
-      setLoading(false);
+      setIsProductsLoaded(true);
     };
 
     fetchData();
@@ -228,7 +229,7 @@ export default function Page() {
     product.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (loading) {
+  if (loading || !isProductsLoaded) {
     return (
       <div className='absolute h-screen w-screen flex items-center justify-center bg-background top-0 left-0'>
         <Progress value={progress} className='w-1/3' />

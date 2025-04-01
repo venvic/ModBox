@@ -21,34 +21,47 @@ if (!getApps().length) {
 }
 
 const transporter = nodemailer.createTransport({
-        host: process.env.NEXT_PUBLIC_SMTP_HOST,
-        port: parseInt(process.env.NEXT_PUBLIC_SMTP_PORT || '587', 10),
-        auth: {
-            user: process.env.NEXT_PUBLIC_SMTP_USER,
-            pass: process.env.NEXT_PUBLIC_SMTP_PASS
-        },
-        from: process.env.NEXT_PUBLIC_SMTP_FROM,
-        secure: false,
-        name: 'cosmema.de',
-        tls: {
-            rejectUnauthorized: false,
-        },
-    });
-
+  host: process.env.NEXT_PUBLIC_SMTP_HOST,
+  port: parseInt(process.env.NEXT_PUBLIC_SMTP_PORT || '587', 10),
+  auth: {
+    user: process.env.NEXT_PUBLIC_SMTP_USER,
+    pass: process.env.NEXT_PUBLIC_SMTP_PASS
+  },
+  from: process.env.NEXT_PUBLIC_SMTP_FROM,
+  secure: false,
+  name: 'cosmema.de',
+  tls: {
+    rejectUnauthorized: false,
+  },
+});
 
 export async function GET(req: NextRequest) {
   try {
-    const usersSnapshot = await firestore.collection('global').doc('users').listCollections();
-    const users = await Promise.all(
-      usersSnapshot.map(async (userCollection) => {
-        const userDoc = await userCollection.doc('info').get();
-        return { uid: userCollection.id, email: userDoc.data()?.email };
-      })
-    );
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return NextResponse.json({ error: "Unauthorized: Missing Authorization header" }, { status: 401 });
+    }
 
-    return NextResponse.json({ users }, { status: 200 });
+    const idToken = authHeader.split("Bearer ")[1];
+    if (!idToken) {
+      return NextResponse.json({ error: "Unauthorized: Missing Bearer token" }, { status: 401 });
+    }
+
+    try {
+      await auth.verifyIdToken(idToken);
+    } catch (error) {
+      return NextResponse.json({ error: "Unauthorized: Invalid ID token" }, { status: 401 });
+    }
+
+    const productsSnapshot = await firestore.collection('product').get();
+    const projects = productsSnapshot.docs.map(doc => ({
+      id: doc.id,
+      name: doc.data().name,
+    }));
+
+    return NextResponse.json({ projects }, { status: 200 });
   } catch (error) {
-    console.error("Error fetching users:", error);
+    console.error("Error fetching projects:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -66,34 +79,16 @@ export async function POST(req: NextRequest) {
     }
 
     const decodedToken = await auth.verifyIdToken(idToken);
-    const { action, uid, email, projectAccess, sendPasswordReset } = await req.json();
-
-    if (action === 'resetPassword') {
-      const userDoc = await firestore.collection('global').doc('users').collection(uid).doc('info').get();
-      const email = userDoc.data()?.email;
-
-      if (!email) {
-        return NextResponse.json({ error: "User email not found" }, { status: 404 });
-      }
-
-      const resetLink = await auth.generatePasswordResetLink(email);
-      console.log(`Password reset link for ${email}: ${resetLink}`);
-      return NextResponse.json({ message: "Password reset link sent" }, { status: 200 });
-    }
-
-    if (action === 'deactivateUser') {
-      await auth.updateUser(uid, { disabled: true });
-      return NextResponse.json({ message: "User deactivated" }, { status: 200 });
-    }
+    const { email, projectAccess, sendPasswordReset } = await req.json();
 
     if (!email || !projectAccess) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
     const userRecord = await auth.createUser({ email });
-    const newUid = userRecord.uid;
+    const uid = userRecord.uid;
 
-    const userRef = firestore.collection('global').doc('users').collection(newUid).doc('info');
+    const userRef = firestore.collection('global').doc('users').collection(uid).doc('info');
     await userRef.set({
       projects: projectAccess.includes('all') ? 'all' : projectAccess,
       createdAt: new Date().toISOString(),
@@ -108,7 +103,7 @@ export async function POST(req: NextRequest) {
       logs: FieldValue.arrayUnion({
         uid: decodedToken.uid,
         action: 'userCreate',
-        itemId: newUid,
+        itemId: uid,
         timestamp: new Date().toISOString()
       })
     }, { merge: true });
@@ -131,9 +126,7 @@ export async function POST(req: NextRequest) {
           `
         };
 
-        // Send the email
         await transporter.sendMail(mailOptions);
-        console.log(`Password reset email sent to ${email}`);
       } catch (error) {
         console.error("Error sending password reset email:", error);
         return NextResponse.json({ error: "Failed to send password reset email" }, { status: 500 });
@@ -143,20 +136,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ message: "User created successfully" }, { status: 200 });
   } catch (error) {
     console.error("Error creating user:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
-}
-
-export async function DELETE(req: NextRequest) {
-  try {
-    const { uid } = await req.json();
-
-    await auth.deleteUser(uid);
-    await firestore.collection('global').doc('users').collection(uid).doc('info').delete();
-
-    return NextResponse.json({ message: "User deleted successfully" }, { status: 200 });
-  } catch (error) {
-    console.error("Error deleting user:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

@@ -6,79 +6,84 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox'; // Import Checkbox component
-import { Select, SelectTrigger, SelectContent, SelectItem } from '@/components/ui/select'
-import MultipleSelector from '@/components/ui/multiple-selector'; // Import the custom multiple selector
-import { Badge } from '@/components/ui/badge'; // Import Badge component
-import { getFirestore, collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore'; // Import Firestore functions
+import { Checkbox } from '@/components/ui/checkbox'; 
+import MultipleSelector from '@/components/ui/multiple-selector';
+import { Badge } from '@/components/ui/badge';
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { doc, getDoc, getFirestore } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
+
 
 export default function Page() {
   const [userId, setUserId] = useState<string | null>(null);
-  const superAdmins = process.env.NEXT_PUBLIC_SUPERADMINS?.split(',') || [];
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [userEmail, setUserEmail] = useState('');
-  const [projectAccess, setProjectAccess] = useState('');
   const [sendPasswordReset, setSendPasswordReset] = useState(false);
   const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
   const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
+  const [isKillSwitchModalOpen, setIsKillSwitchModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [users, setUsers] = useState<{ uid: string; email: string }[]>([]);
+  const [selectedUser, setSelectedUser] = useState<{ uid: string; email: string } | null>(null);
+  const superAdmins = process.env.NEXT_PUBLIC_SUPERADMINS?.split(',') || [];
   const [logs, setLogs] = useState<any[]>([]);
   const [filteredLogs, setFilteredLogs] = useState<any[]>([]);
-  const [searchQuery, setSearchQuery] = useState({ date: '', user: '', action: '' });
-  const [currentPage, setCurrentPage] = useState(1);
-  const logsPerPage = 10;
 
   useEffect(() => {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setUserId(user.uid);
-      } else {
-        setUserId(null);
-      }
+      setUserId(user ? user.uid : null);
     });
     return () => unsubscribe();
   }, []);
 
   useEffect(() => {
-    const fetchProjects = async () => {
+    const fetchUsers = async () => {
       try {
-        const auth = getAuth();
-        const unsubscribe = onAuthStateChanged(auth, async (user) => {
-          if (!user) {
-            toast.error('Benutzer ist nicht authentifiziert.');
-            console.error('Error: Current user is null.');
-            return;
-          }
-
-          try {
-            const idToken = await user.getIdToken();
-
-            const response = await fetch('/api/handleUser', {
-              method: 'GET',
-              headers: {
-                Authorization: `Bearer ${idToken}`,
-              },
-            });
-
-            if (response.ok) {
-              const data = await response.json();
-              setProjects(data.projects);
-            } else {
-              const errorData = await response.json();
-              console.error('Error fetching projects:', errorData);
-              toast.error(`Fehler beim Abrufen der Projekte: ${errorData.error || 'Unbekannter Fehler'}`);
-            }
-          } catch (error) {
-            console.error('Error fetching projects:', error);
-            toast.error('Fehler beim Abrufen der Projekte');
+        const response = await fetch('/api/handleUser', {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${await getAuth().currentUser?.getIdToken()}`
           }
         });
 
-        return () => unsubscribe();
+        if (response.ok) {
+          const data = await response.json();
+          setUsers(data.users);
+        } else {
+          const errorData = await response.json();
+          toast.error('Fehler beim Abrufen der Nutzer', { description: errorData.error });
+        }
       } catch (error) {
-        console.error('Error initializing Firebase Auth:', error);
-        toast.error('Fehler beim Initialisieren der Authentifizierung');
+        console.error('Error fetching users:', error);
+        toast.error('Fehler beim Abrufen der Nutzer');
+      }
+    };
+
+    fetchUsers();
+  }, []);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const db = getFirestore();
+        const productsSnapshot = await getDocs(collection(db, 'product'));
+        const fetchedProjects = productsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          name: doc.data().name,
+        }));
+        setProjects(fetchedProjects);
+      } catch (error) {
+        console.error('Error fetching projects:', error);
+        toast.error('Fehler beim Abrufen der Projekte');
       }
     };
 
@@ -88,9 +93,7 @@ export default function Page() {
   useEffect(() => {
     const fetchLogs = async () => {
       try {
-        const db = getFirestore(); // Initialize Firestore
-
-        // Fetch all documents in the 'logs' collection
+        const db = getFirestore();
         const logsCollectionRef = collection(db, 'logs');
         const querySnapshot = await getDocs(logsCollectionRef);
 
@@ -103,36 +106,31 @@ export default function Page() {
 
         const allLogs: any[] = [];
 
-        // Iterate through each document in the 'logs' collection
         for (const docSnapshot of querySnapshot.docs) {
-          const date = docSnapshot.id; // Document ID represents the date
-          const logsData = docSnapshot.data().logs || []; // Extract the logs array
+          const date = docSnapshot.id;
+          const logsData = docSnapshot.data().logs || [];
 
-          // Fetch emails for each log
           const logsWithEmails = await Promise.all(
             logsData.map(async (log: any) => {
               if (!log.uid) {
-                console.warn(`Log is missing a UID. Skipping.`);
-                return { ...log, email: 'Unknown', date }; // Include the date for each log
+                return { ...log, email: 'Unknown', date };
               }
 
               const userDocRef = doc(db, 'global/users', log.uid, 'info');
               const userDocSnapshot = await getDoc(userDocRef);
 
               if (!userDocSnapshot.exists()) {
-                console.warn(`No user found for UID ${log.uid}.`);
-                return { ...log, email: 'Unknown', date }; // Include the date for each log
+                return { ...log, email: 'Unknown', date };
               }
 
               const userData = userDocSnapshot.data();
-              return { ...log, email: userData.email || 'Unknown', date }; // Include the date for each log
+              return { ...log, email: userData.email || 'Unknown', date };
             })
           );
 
-          allLogs.push(...logsWithEmails); // Add logs from this date to the overall list
+          allLogs.push(...logsWithEmails);
         }
 
-        // Sort logs by timestamp (newest to oldest)
         const sortedLogs = allLogs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
         setLogs(sortedLogs);
         setFilteredLogs(sortedLogs);
@@ -145,31 +143,31 @@ export default function Page() {
     fetchLogs();
   }, []);
 
-  const isSuperAdmin = userId ? superAdmins.includes(userId) : false;
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const response = await fetch('/api/handleUser', {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${await getAuth().currentUser?.getIdToken()}`
+          }
+        });
 
-  const handleActivate = async () => {
-    try {
-      const response = await fetch('/api/killSwitch', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${await getAuth().currentUser?.getIdToken()}`
+        if (response.ok) {
+          const data = await response.json();
+          setProjects(data.projects || []);
+        } else {
+          const errorData = await response.json();
+          toast.error('Fehler beim Abrufen der Projekte', { description: errorData.error });
         }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        toast.success('Kill Switch aktiviert', { description: data.message});
-      } else {
-        const errorData = await response.json();
-        toast.error('Fehler beim Aktivieren des Kill Switch', { description: errorData.error });
+      } catch (error) {
+        console.error('Error fetching projects:', error);
+        toast.error('Fehler beim Abrufen der Projekte');
       }
-    } catch (error:any) {
-      toast.error('Fehler beim Aktivieren des Kill Switch', { description: error });
-    }
+    };
 
-    setIsModalOpen(false);
-  };
+    fetchProjects();
+  }, []);
 
   const handleCreateUser = async () => {
     try {
@@ -187,70 +185,146 @@ export default function Page() {
       });
 
       if (response.ok) {
-        const data = await response.json();
-        toast.success('Nutzer erfolgreich erstellt', { description: data.message });
+        toast.success('Nutzer erfolgreich erstellt');
+        setUserEmail('');
+        setSelectedProjects([]);
+        setSendPasswordReset(false);
+        setIsUserModalOpen(false);
+        const updatedUsers = await response.json();
+        setUsers(updatedUsers.users);
       } else {
         const errorData = await response.json();
         toast.error('Fehler beim Erstellen des Nutzers', { description: errorData.error });
       }
-    } catch (error: any) {
-      toast.error('Fehler beim Erstellen des Nutzers', { description: error });
+    } catch (error) {
+      toast.error('Fehler beim Erstellen des Nutzers');
+    }
+  };
+
+  const handleActivateKillSwitch = async () => {
+    try {
+      const response = await fetch('/api/killSwitch', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${await getAuth().currentUser?.getIdToken()}`
+        }
+      });
+
+      if (response.ok) {
+        toast.success('Kill Switch aktiviert');
+      } else {
+        const errorData = await response.json();
+        toast.error('Fehler beim Aktivieren des Kill Switch', { description: errorData.error });
+      }
+    } catch (error) {
+      toast.error('Fehler beim Aktivieren des Kill Switch');
     }
 
-    setIsUserModalOpen(false);
+    setIsKillSwitchModalOpen(false);
+  };
+
+  const handleEditUser = (user: { uid: string; email: string }) => {
+    setSelectedUser(user);
+    setIsEditModalOpen(true);
+  };
+
+  const handleResetPassword = async () => {
+    try {
+      const response = await fetch('/api/handleUser', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${await getAuth().currentUser?.getIdToken()}`
+        },
+        body: JSON.stringify({
+          action: 'resetPassword',
+          uid: selectedUser?.uid,
+        })
+      });
+
+      if (response.ok) {
+        toast.success('Passwort-Reset-Link gesendet');
+        setIsEditModalOpen(false);
+      } else {
+        const errorData = await response.json();
+        toast.error('Fehler beim Senden des Passwort-Reset-Links', { description: errorData.error });
+      }
+    } catch (error) {
+      toast.error('Fehler beim Senden des Passwort-Reset-Links');
+    }
+  };
+
+  const handleDeactivateUser = async () => {
+    try {
+      const response = await fetch('/api/handleUser', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${await getAuth().currentUser?.getIdToken()}`
+        },
+        body: JSON.stringify({
+          action: 'deactivateUser',
+          uid: selectedUser?.uid,
+        })
+      });
+
+      if (response.ok) {
+        toast.success('Nutzer deaktiviert');
+        setUsers(users.filter((user) => user.uid !== selectedUser?.uid));
+        setIsEditModalOpen(false);
+      } else {
+        const errorData = await response.json();
+        toast.error('Fehler beim Deaktivieren des Nutzers', { description: errorData.error });
+      }
+    } catch (error) {
+      toast.error('Fehler beim Deaktivieren des Nutzers');
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    try {
+      const response = await fetch('/api/handleUser', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${await getAuth().currentUser?.getIdToken()}`
+        },
+        body: JSON.stringify({
+          uid: selectedUser?.uid,
+        })
+      });
+
+      if (response.ok) {
+        toast.success('Nutzer gelöscht');
+        setUsers(users.filter((user) => user.uid !== selectedUser?.uid));
+        setIsEditModalOpen(false);
+      } else {
+        const errorData = await response.json();
+        toast.error('Fehler beim Löschen des Nutzers', { description: errorData.error });
+      }
+    } catch (error) {
+      toast.error('Fehler beim Löschen des Nutzers');
+    }
   };
 
   const handleSelectAllProjects = () => {
     if (selectedProjects.length === projects.length) {
-      setSelectedProjects([]); 
+      setSelectedProjects([]);
     } else {
       setSelectedProjects(projects.map((project) => project.id));
     }
   };
 
-  const handleSearch = () => {
-    const filtered = logs.filter((log) => {
-      const matchesDate = searchQuery.date ? log.timestamp.startsWith(searchQuery.date) : true;
-      const matchesUser = searchQuery.user ? log.email.includes(searchQuery.user) : true;
-      const matchesAction = searchQuery.action ? log.action.includes(searchQuery.action) : true;
-      return matchesDate && matchesUser && matchesAction;
-    });
 
-    // Sort logs by timestamp (newest to oldest)
-    const sortedLogs = filtered.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-    setFilteredLogs(sortedLogs);
-    setCurrentPage(1);
-  };
-
-  const getBadgeColor = (action: string) => {
-    switch (action) {
-      case 'userCreate':
-        return 'bg-blue-500/70 text-white';
-      case 'DeleteProduct':
-        return 'bg-red-500/70 text-white';
-      case 'DeleteModule':
-        return 'bg-orange-500/70 text-white';
-      case 'KillSwitchActivated':
-        return 'bg-red-500/70 text-white';
-      default:
-        return 'bg-gray-500/70 text-white';
-    }
-  };
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-
-  const displayedLogs = filteredLogs.slice((currentPage - 1) * logsPerPage, currentPage * logsPerPage);
+  const displayedLogs = filteredLogs;
+  const isSuperAdmin = userId ? superAdmins.includes(userId) : false;
 
   return (
-    <div className='w-full h-screen flex flex-col gap-4 items-center bg-background justify-center'>
+    <div className='w-full min-h-screen flex flex-col gap-4 items-center justify-center bg-background'>
       {isSuperAdmin ? (
-        <div className='max-w-[1900px] w-full p-4 md:p-12 flex flex-col gap-12'>
-          <div className='w-full h-fit'>
+        <div className='max-w-[1900px] w-full p-4 md:p-12 flex flex-col divide-y divide-neutral-800'>
+          <div className='w-full h-fit py-12'>
             <h1 className='font-semibold text-lg'>Nutzer erstellen</h1>
-            <p className='text-sm text-neutral-300'>Erstellen Sie Nutzer ausschließlich mit einer gültigen E-Mail-Adresse.</p>
-
             <Dialog open={isUserModalOpen} onOpenChange={setIsUserModalOpen}>
               <DialogTrigger asChild>
                 <Button variant="secondary" className='mt-4'>Nutzer hinzufügen</Button>
@@ -295,78 +369,98 @@ export default function Page() {
                   />
                   <label>Passwort-Reset senden</label>
                 </div>
-                <DialogFooter className='w-full flex flex-col justify-between'>
-                  <Button variant="outline" className='mr-auto' onClick={() => setIsUserModalOpen(false)}>Abbrechen</Button>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsUserModalOpen(false)}>Abbrechen</Button>
                   <Button variant="destructive" onClick={handleCreateUser}>Bestätigen</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+
+            <div className='mt-8'>
+              <h2 className='font-semibold text-lg'>Nutzerliste</h2>
+              <Table className='mt-4'>
+                <TableCaption>Eine Liste aller Nutzer.</TableCaption>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>E-Mail</TableHead>
+                    <TableHead className="max-w-[130px] w-[130px]">UID</TableHead>
+                    <TableHead className="text-right">Edit</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {users.map((user) => (
+                      <TableRow key={user.uid} className="border-b">
+                        <TableCell className="p-2">{user.email}</TableCell>
+                        <TableCell className="p-2 max-w-[130px] w-[130px] overflow-hidden">{user.uid}</TableCell>
+                        <TableCell className="p-2 flex justify-end">
+                          <Button variant="outline" onClick={() => handleEditUser(user)}>
+                            Bearbeiten
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
+            </div>
           </div>
-          <div className='w-full h-fit'>
+
+          <div className='w-full h-fit py-12'>
             <h1 className='font-semibold text-lg'>Aktivitäten</h1>
-            <div className='flex gap-2 mt-4'>
-              <Input
-                placeholder='Datum (YYYY-MM-DD)'
-                value={searchQuery.date}
-                onChange={(e) => setSearchQuery({ ...searchQuery, date: e.target.value })}
-              />
-              <Input
-                placeholder='Benutzer (E-Mail)'
-                value={searchQuery.user}
-                onChange={(e) => setSearchQuery({ ...searchQuery, user: e.target.value })}
-              />
-              <Input
-                placeholder='Aktion'
-                value={searchQuery.action}
-                onChange={(e) => setSearchQuery({ ...searchQuery, action: e.target.value })}
-              />
-              <Button onClick={handleSearch}>Suchen</Button>
-            </div>
             <div className='mt-4'>
-              {displayedLogs.map((log, index) => (
-                <div key={index} className='flex items-center justify-between p-2 border-b'>
-                  <Badge className={getBadgeColor(log.action)}>{log.action}</Badge>
-                  <span>{log.email}</span>
-                  <span>{new Date(log.date).toLocaleDateString('de-DE', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
-                </div>
-              ))}
-            </div>
-            <div className='flex justify-between items-center mt-4'>
-              <Button
-                variant="outline"
-                disabled={currentPage === 1}
-                onClick={() => handlePageChange(currentPage - 1)}
-              >
-                Zurück
-              </Button>
-              <span>
-                Seite {currentPage} von {Math.ceil(filteredLogs.length / logsPerPage)}
-              </span>
-              <Button
-                variant="outline"
-                disabled={currentPage === Math.ceil(filteredLogs.length / logsPerPage)}
-                onClick={() => handlePageChange(currentPage + 1)}
-              >
-                Weiter
-              </Button>
+              <Table>
+                <TableCaption>Eine Liste aller Aktivitäten.</TableCaption>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="">Aktion</TableHead>
+                    <TableHead>Datum</TableHead>
+                    <TableHead className="text-right">Email</TableHead>
+                  </TableRow>
+                </TableHeader>
+
+                <TableBody className='max-h-[400px] h-[400px] overflow-scroll'>
+                  {displayedLogs.map((log, index) => (
+                    <TableRow key={index}>
+                      <TableCell className="font-medium"><Badge>{log.action}</Badge></TableCell>
+                      <TableCell><span>{new Date(log.date).toLocaleDateString('de-DE', { year: 'numeric', month: 'long', day: 'numeric' })}</span></TableCell>
+                      <TableCell className='text-right'><span>{log.email}</span></TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           </div>
-          <div className='w-full h-fit'>
+
+          <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Nutzer bearbeiten</DialogTitle>
+                <DialogDescription>Bearbeiten Sie die Optionen für den Nutzer {selectedUser?.email}.</DialogDescription>
+              </DialogHeader>
+              <div className="flex flex-col gap-4">
+                <Button variant="outline" onClick={handleResetPassword}>Passwort zurücksetzen</Button>
+                <Button onClick={handleDeactivateUser}>Nutzer deaktivieren</Button>
+                <Button variant="destructive" onClick={handleDeleteUser}>Nutzer löschen</Button>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>Abbrechen</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+          <div className='w-full h-fit py-12'>
             <h1 className='font-semibold text-lg'>Kill Switch</h1>
             <p className='text-sm text-neutral-300'>Sobald diese Funktion ausgeführt wird, sind alle Lesevorgänge für Nutzer eingeschränkt, und sämtliche Module werden für sie nicht mehr sichtbar.</p>
-
-            <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+            <Dialog open={isKillSwitchModalOpen} onOpenChange={setIsKillSwitchModalOpen}>
               <DialogTrigger asChild>
                 <Button variant="destructive" className='mt-4'>Aktivieren</Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Kritische Aktion ausführen?</DialogTitle>  
-                  <DialogDescription>Diese Aktion kann nicht rückgängig gemacht werden und sollte nur in dringenden Sicherheitsfällen bestätigt werden.</DialogDescription>  
+                  <DialogTitle>Kritische Aktion ausführen?</DialogTitle>
+                  <DialogDescription>Diese Aktion kann nicht rückgängig gemacht werden und sollte nur in dringenden Sicherheitsfällen bestätigt werden.</DialogDescription>
                 </DialogHeader>
-                <DialogFooter className='w-full flex flex-col justify-between'>
-                  <Button variant="outline" className='mr-auto' onClick={() => setIsModalOpen(false)}>Abbrechen</Button>
-                  <Button variant="destructive" onClick={handleActivate}>Bestätigen</Button>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsKillSwitchModalOpen(false)}>Abbrechen</Button>
+                  <Button variant="destructive" onClick={handleActivateKillSwitch}>Bestätigen</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>

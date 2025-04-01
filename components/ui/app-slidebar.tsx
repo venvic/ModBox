@@ -3,7 +3,7 @@ import { Calendar, ChevronUp, Home, Inbox, Plus, Search, Settings, User, Users }
 import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogTrigger } from "./dialog"
 import { getAuth, onAuthStateChanged } from 'firebase/auth'
-import { getFirestore, collection, getDocs } from 'firebase/firestore'
+import { getFirestore, collection, getDocs, doc, getDoc } from 'firebase/firestore'
 import { initializeApp, getApps } from 'firebase/app'
 import { auth, firebaseConfig } from '@/database'
 
@@ -49,6 +49,7 @@ const items = [
 export function AppSidebar() {
   const [product, setProduct] = useState<{ name: string; modulesCount: number, id: string }[]>([])
   const [userEmail, setUserEmail] = useState<string | null>(null)
+  const [showGemeinden, setShowGemeinden] = useState(false)
   const router = useRouter();
 
   const handleAddGemeinde = () => {
@@ -70,16 +71,19 @@ export function AppSidebar() {
       setProduct(products)
     }
 
-    fetchGemeinden()
+    const fetchUserProjects = async () => {
+      const auth = getAuth()
+      onAuthStateChanged(auth, async (user) => {
+        if (user) {
+          const userDoc = await getDoc(doc(db, `/global/users/${user.uid}/info`))
+          const projects = userDoc.exists() ? userDoc.data().projects : null
+          setShowGemeinden(projects === "all")
+        }
+      })
+    }
 
-    const auth = getAuth()
-    onAuthStateChanged(auth, (user) => {
-      if (user && user.email) {
-        setUserEmail(user.email)
-      } else {
-        setUserEmail("Unknown User")
-      }
-    })
+    fetchGemeinden()
+    fetchUserProjects()
   }, [])
 
   return (
@@ -102,25 +106,27 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
-              <Collapsible defaultOpen className="group/collapsible">
-                <SidebarMenuItem>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuButton>
-                      <Inbox /> <span>Gemeinden</span>
-                    </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      {product.map((product) => (
-                        <SidebarMenuSubItem key={product.id} className="flex py-[2px] cursor-pointer" onClick={() => router.push(`/dashboard/${product.id}`)}>
-                          {product.name}
-                          <SidebarMenuBadge>{product.modulesCount}</SidebarMenuBadge>
-                        </SidebarMenuSubItem>
-                      ))}
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </SidebarMenuItem>
-              </Collapsible>
+              {showGemeinden && (
+                <Collapsible defaultOpen className="group/collapsible">
+                  <SidebarMenuItem>
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton>
+                        <Inbox /> <span>Gemeinden</span>
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        {product.map((product) => (
+                          <SidebarMenuSubItem key={product.id} className="flex py-[2px] cursor-pointer" onClick={() => router.push(`/dashboard/${product.id}`)}>
+                            {product.name}
+                            <SidebarMenuBadge>{product.modulesCount}</SidebarMenuBadge>
+                          </SidebarMenuSubItem>
+                        ))}
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </SidebarMenuItem>
+                </Collapsible>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
