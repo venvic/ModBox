@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react"
 import Image from "next/image"
-import { Clock } from "lucide-react"
+import { PiClockAfternoonDuotone } from "react-icons/pi";
 import { firebaseConfig } from "@/database"
 import { initializeApp } from "firebase/app"
 import { collection, doc, getDoc, getDocs, getFirestore, query } from "firebase/firestore"
@@ -165,12 +165,12 @@ const TerminalModule: React.FC<TerminalProps> = ({ product, module }) => {
   }
 
   const topBarContent = (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center w-full gap-2">
       {settings.topBarLogos.map(
         (logo, index) =>
           logo && (
             <div key={index} className="h-8 w-8 relative">
-              <Image
+              <img
                 src={logo || "/placeholder.svg"}
                 alt={`Logo ${index + 1}`}
                 width={32}
@@ -180,7 +180,7 @@ const TerminalModule: React.FC<TerminalProps> = ({ product, module }) => {
             </div>
           ),
       )}
-      <h1 className="font-bold text-lg">{module.name}</h1>
+      <h1 className="font-bold text-lg w-full text-center">{module.name}</h1>
     </div>
   )
 
@@ -237,7 +237,7 @@ const TerminalModule: React.FC<TerminalProps> = ({ product, module }) => {
 
           {settings.topBarShowTime && (
             <div className="flex items-center gap-2">
-              <Clock className="h-5 w-5" />
+              <PiClockAfternoonDuotone className="h-5 w-5" />
               <span>{currentTime}</span>
             </div>
           )}

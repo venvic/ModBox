@@ -71,7 +71,7 @@ export default function Page() {
     fetchUsers();
   }, []);
 
-  useEffect(() => {
+   useEffect(() => {
     const fetchProjects = async () => {
       try {
         const db = getFirestore();
@@ -89,6 +89,7 @@ export default function Page() {
 
     fetchProjects();
   }, []);
+
 
   useEffect(() => {
     const fetchLogs = async () => {
@@ -143,7 +144,7 @@ export default function Page() {
     fetchLogs();
   }, []);
 
-  useEffect(() => {
+   useEffect(() => {
     const fetchProjects = async () => {
       try {
         const response = await fetch('/api/handleUser', {
@@ -156,6 +157,7 @@ export default function Page() {
         if (response.ok) {
           const data = await response.json();
           setProjects(data.projects || []);
+          toast.success('Projekte erfolgreich abgerufen');
         } else {
           const errorData = await response.json();
           toast.error('Fehler beim Abrufen der Projekte', { description: errorData.error });
@@ -168,6 +170,7 @@ export default function Page() {
 
     fetchProjects();
   }, []);
+
 
   const handleCreateUser = async () => {
     try {
@@ -343,7 +346,7 @@ export default function Page() {
                   <label className='block text-sm font-medium'>Projekte</label>
                   <MultipleSelector
                     value={projects
-                      .filter((project) => selectedProjects.includes(project.id))
+                      ?.filter((project) => selectedProjects.includes(project.id)) 
                       .map((project) => ({ value: project.id, label: project.name }))}
                     options={[
                       { value: 'all', label: 'Alle auswählen' },
@@ -475,3 +478,4 @@ export default function Page() {
     </div>
   );
 }
+

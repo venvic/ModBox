@@ -3,33 +3,29 @@ import { firebaseConfig } from '@/database';
 import { initializeApp } from 'firebase/app';
 import { collection, doc, getDoc, getDocs, getFirestore, query, setDoc, writeBatch } from 'firebase/firestore';
 import React, { useEffect, useState, JSX } from 'react'
-import {
-    Accordion,
-    AccordionContent,
-    AccordionItem,
-    AccordionTrigger,
-} from "@/components/ui/accordion"
 import { Card } from '../ui/card';
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
 import { Slider } from '../ui/slider';
 import { Button } from '../ui/button';
-import { HexColorPicker } from "react-colorful";
-import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '../ui/sheet'; // Assuming you have a sheet component
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs'; // Assuming you have a tabs component
+
+import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '../ui/sheet';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs';
 import { DndContext, closestCenter } from '@dnd-kit/core';
 import { arrayMove, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { FaGrip, FaPlus, FaTrash } from 'react-icons/fa6';
 import { toast } from 'sonner';
-import { Toggle } from '../ui/toggle';
 import { Switch } from '../ui/switch';
 import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover';
 import * as allIcons from 'react-icons/fa6';
 import getRandomId from '@/utils/getRandomId';
+import { getStorage, ref, listAll, uploadBytes, deleteObject, getDownloadURL } from 'firebase/storage';
+import ImageSelectorComponent from '../imageSelector';
 
 const db = getFirestore(initializeApp(firebaseConfig));
+const storage = getStorage();
 
 type Tile = {
     id: string;
@@ -283,6 +279,72 @@ const ColorInput = ({ label, value, onChange }: { label: string, value: string, 
     );
 };
 
+const ImageSelector = ({ moduleId, selectedImage, onImageSelect }: { moduleId: string, selectedImage: string, onImageSelect: (url: string) => void }) => {
+    const [images, setImages] = useState<string[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        const fetchImages = async () => {
+            setIsLoading(true);
+            const imagesRef = ref(storage, `/IMAGES/${moduleId}/`);
+            const result = await listAll(imagesRef);
+            const urls = await Promise.all(result.items.map(item => getDownloadURL(item)));
+            setImages(urls);
+            setIsLoading(false);
+        };
+        fetchImages();
+    }, [moduleId]);
+
+    const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (event.target.files && event.target.files[0]) {
+            const file = event.target.files[0];
+            const fileRef = ref(storage, `/IMAGES/${moduleId}/${file.name}`);
+            await uploadBytes(fileRef, file);
+            const url = await getDownloadURL(fileRef);
+            setImages(prev => [...prev, url]);
+        }
+    };
+
+    const handleDelete = async (url: string) => {
+        const fileRef = ref(storage, url.replace(/.*\/IMAGES\//, '/IMAGES/'));
+        await deleteObject(fileRef);
+        setImages(prev => prev.filter(image => image !== url));
+        if (selectedImage === url) onImageSelect('');
+    };
+
+    return (
+        <div className="grid gap-2">
+            <Label>Logo auswählen</Label>
+            <div className="grid grid-cols-3 gap-2">
+                {isLoading ? (
+                    <p>Lade Bilder...</p>
+                ) : (
+                    images.map((image) => (
+                        <div key={image} className="relative">
+                            <img
+                                src={image}
+                                alt="Logo"
+                                className={`w-32 h-32 object-contain cursor-pointer border ${selectedImage === image ? 'border-secondary' : 'border-transparent'}`}
+                                onClick={() => onImageSelect(image)}
+                            />
+                            <button
+                                className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center"
+                                onClick={() => handleDelete(image)}
+                            >
+                                ×
+                            </button>
+                        </div>
+                    ))
+                )}
+                <label className="flex items-center justify-center w-full h-20 border border-dashed cursor-pointer">
+                    <span>+</span>
+                    <input type="file" className="hidden" onChange={handleUpload} />
+                </label>
+            </div>
+        </div>
+    );
+};
+
 const TerminalEditor = ({ id, productId, onChangesSaved }: { id: string, productId: string, onChangesSaved: () => void }) => {
     const [tiles, setTiles] = useState<Tile[]>([]);
     const [settings, setSettings] = useState<Settings>(defaultSettings);
@@ -333,13 +395,11 @@ const TerminalEditor = ({ id, productId, onChangesSaved }: { id: string, product
                 <TabsContent value="general">
                     <Card className='h-fit py-5 bg-transparent border-none rounded-none text-white'>
                         <h2 className='text-base font-medium mb-4'>Hintergrund Einstellungen</h2>
-                        <div className='flex flex-col'>
-                            <Label className='ml-1 text-neutral-500'>URL</Label>
-                            <Input 
-                                className='w-full placeholder:text-neutral-400/60 mt-1 mb-4' 
-                                placeholder='https://beispiel.com/bild'
-                                value={settings.backgroundImgUrl}
-                                onChange={(e) => handleChange({ backgroundImgUrl: e.target.value })}
+                        <div className='flex flex-col gap-4'>
+                            <Label className='ml-1 text-neutral-500'>Hintergrundbild</Label>
+                            <ImageSelectorComponent
+                                moduleId={id}
+                                onImageSelect={(url) => handleChange({ backgroundImgUrl: url })}
                             />
                             <Label className='ml-1 mb-1 text-neutral-500'>Verschwommenheit</Label>
                             <Slider 
@@ -380,24 +440,10 @@ const TerminalEditor = ({ id, productId, onChangesSaved }: { id: string, product
                                     onValueChange={(value) => handleChange({ topBarPadding: value[0] })}
                                 />
                             </div>
-                            <div>
-                                <Label className='ml-1 text-neutral-500'>Icon 1</Label>
-                                <Input 
-                                    className='w-full placeholder:text-neutral-400/60 mt-0 mb-4' 
-                                    placeholder='https://beispiel.com/bild1'
-                                    value={settings.topBarLogos[0]}
-                                    onChange={(e) => handleChange({ topBarLogos: [e.target.value, settings.topBarLogos[1]] })}
-                                />
-                            </div>
-                            <div>
-                                <Label className='ml-1 text-neutral-500'>Icon 2</Label>
-                                <Input 
-                                    className='w-full placeholder:text-neutral-400/60 mt-1 mb-4' 
-                                    placeholder='https://beispiel.com/bild2'
-                                    value={settings.topBarLogos[1]}
-                                    onChange={(e) => handleChange({ topBarLogos: [settings.topBarLogos[0], e.target.value] })}
-                                />
-                            </div>
+                            <ImageSelectorComponent
+                                moduleId={id}
+                                onImageSelect={(url) => handleChange({ topBarLogos: [url] })}
+                            />
                         </div>
                     </Card>
                 </TabsContent>

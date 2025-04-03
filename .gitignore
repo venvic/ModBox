@@ -49,6 +49,7 @@ firestore.rules
 firestore.indexes.json
 firebase.json
 database.ts
+firebase-debug.log
 
 # other
 /config/

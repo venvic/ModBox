@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 
 export async function POST(req: NextRequest) {
-    const { emailHTML, activeRecipients, moduleName } = await req.json();
+    const { emailHTML, activeRecipients, emailTitle } = await req.json();
 
     const transporter = nodemailer.createTransport({
         host: process.env.NEXT_PUBLIC_SMTP_HOST,
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     const mailOptions = {
         from: process.env.NEXT_PUBLIC_SMTP_FROM,
         to: activeRecipients,
-        subject: `Neue Formularanfrage: ${moduleName}`,
+        subject: `Neue Formularanfrage: ${emailTitle}`,
         html: emailHTML,
     };
 

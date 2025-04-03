@@ -8,7 +8,7 @@ import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger } from './ui/select';
 import { Progress } from './ui/progress';
 import { Button } from './ui/button';
-import { FaCloudBolt, FaOutdent, FaMapLocationDot, FaFilePdf, FaClock, FaClipboardList, FaGear, FaChevronLeft, FaTablet, FaPhone } from "react-icons/fa6";
+import { FaCloudBolt, FaOutdent, FaMapLocationDot, FaFilePdf, FaClock, FaClipboardList, FaGear, FaChevronLeft, FaTablet, FaPhone, FaPeopleGroup } from "react-icons/fa6";
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
 import { Textarea } from './ui/textarea';
@@ -162,6 +162,7 @@ export const ModuleDialog = ({ isOpen, onClose, productId, refreshModules }: { i
                   <SelectItem value='Offnungszeiten'>Öffnungszeiten</SelectItem>
                   <SelectItem value='Formular-Modul'>Formular Modul</SelectItem>
                   <SelectItem value='Kontakt-Modul'>Kontakt Modul</SelectItem>
+                  <SelectItem value='Beteiligungs-Modul'>Beteiligungs Modul</SelectItem>
                   <SelectItem value='Terminal-Modul'>Terminal Modul</SelectItem>
                 </SelectContent>
             </Select>
@@ -387,6 +388,8 @@ export const ProductModules = ({ productId }: { productId: string }) => {
         return <FaClipboardList />;
       case 'Terminal-Modul':
         return <FaTablet />;
+      case 'Beteiligungs-Modul':
+        return <FaPeopleGroup />;
       case 'Kontakt-Modul':
         return <FaPhone />;
       default:

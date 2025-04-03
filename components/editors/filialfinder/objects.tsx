@@ -20,6 +20,8 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { CSS } from '@dnd-kit/utilities';
+import ImageSelector from '@/components/imageSelector';
+import { Label } from '@/components/ui/label';
 
 const db = getFirestore();
 const storage = getStorage();
@@ -169,7 +171,6 @@ const ObjectsEditor = ({ moduleId, productId, categories, onChangesSaved, filter
     
       const batch = writeBatch(db);
       if (editingObjectId) {
-        // Update existing object
         const existingObject = objects.find(obj => obj.id === editingObjectId);
         if (existingObject && existingObject.category !== category) {
           // Delete old object if category has changed
@@ -263,6 +264,11 @@ const ObjectsEditor = ({ moduleId, productId, categories, onChangesSaved, filter
       onChangesSaved();
     };
   
+    const handleImageSelect = (url: string) => {
+      setImageUrl(url);
+      setSelectedImageFile(null); // Clear any previously selected file
+    };
+  
     const filteredIcons = Object.keys(FaIcons).filter(iconName => iconName.toLowerCase().includes(iconSearch.toLowerCase()));
     const lastUsedIcons = getLastUsedIcons();
   
@@ -300,33 +306,27 @@ const ObjectsEditor = ({ moduleId, productId, categories, onChangesSaved, filter
             ) : (
               <div className="flex flex-col divide-y max-h-[80dvh] overflow-scroll">
                 <div>
-                  <Input
-                    value={imageUrl}
-                    onChange={(e) => setImageUrl(e.target.value)}
-                    placeholder='Bild URL'
-                    className='text-white placeholder:text-neutral-400/50 mb-1'
-                    disabled={!!selectedImageFile}
+                  <Label className="mb-2 text-neutral-500">Bild auswählen</Label>
+                  <ImageSelector
+                    moduleId={moduleId}
+                    onImageSelect={handleImageSelect}
                   />
-  
-                  <div className='flex gap-1'>
-                    <Input
-                      type="file"
-                      accept=".jpg, .jpeg, .png"
-                      onChange={(e) => e.target.files && setSelectedImageFile(e.target.files[0])}
-                      className='text-white placeholder:text-neutral-400/50 mb-1'
-                    />
-                    {selectedImageFile && (
-                      <Button variant="destructive" onClick={handleRemoveSelectedImage}>
+                  {imageUrl && (
+                    <div className="relative mt-4">
+                      <img src={imageUrl} alt="Selected" className="h-36 w-36 object-cover border rounded-md" />
+                      <Button
+                        variant="destructive"
+                        className="absolute top-0 right-0"
+                        onClick={handleRemoveSelectedImage}
+                      >
                         <FaTrash />
                       </Button>
-                    )}
-                  </div>
-  
-                  <div className='flex items-center gap-2 mt-2 mb-4'>
+                    </div>
+                  )}
+                  <div className='flex items-center gap-2 mt-4 mb-4'>
                     <Switch checked={imageInsight} onCheckedChange={setImageInsight} />
                     <p className='text-sm'>Vorschaubild anzeigen</p>
                   </div>
-  
                   <Input
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}

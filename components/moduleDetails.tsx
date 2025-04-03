@@ -25,6 +25,7 @@ import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMe
 import TerminalEditor from './editors/TerminalEditor';
 import handleDelete from '@/utils/dataHandler';
 import KontaktmodulEditor from './editors/KontaktmodulEditor';
+import BeteiligungEditor from './editors/BeteiligungEditor';
 
 if (!getApps().length) {
   initializeApp(firebaseConfig);
@@ -46,6 +47,8 @@ const getEditorComponent = (productId:string, id:string, type: string, onChanges
       return <FormularmodulEditor id={id} productId={productId} onChangesSaved={onChangesSaved} />;
     case 'Terminal-Modul':
       return <TerminalEditor id={id} productId={productId} onChangesSaved={onChangesSaved} />;
+    case 'Beteiligungs-Modul':
+      return <BeteiligungEditor id={id} productId={productId} onChangesSaved={onChangesSaved} />;
     case 'Kontakt-Modul':
       return <KontaktmodulEditor id={id} productId={productId} onChangesSaved={onChangesSaved} />;
     default:
@@ -54,7 +57,7 @@ const getEditorComponent = (productId:string, id:string, type: string, onChanges
 };
 
 export const ModuleDetails = ({ productId, moduleId }: { productId: string, moduleId: string }) => {
-  const [module, setModule] = useState<{ name: string; type: string; description: string; settings: string; privacy?: string } | null>(null);
+  const [module, setModule] = useState<{ name: string; type: string; description: string; settings: string; emailTitle?: string; privacy?: string } | null>(null);
   const [product, setProduct] = useState<{ name: string; slug: string; id: string } | null>(null);
   const [products, setProducts] = useState<{ id: string; name: string }[]>([]);
   const [modules, setModules] = useState<{ id: string; name: string }[]>([]);
@@ -62,6 +65,7 @@ export const ModuleDetails = ({ productId, moduleId }: { productId: string, modu
   const [progress, setProgress] = useState(0);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [emailTitle, setEmailTitle] = useState('');
   const [privacy, setPrivacy] = useState('');
   const [settings, setSettings] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
@@ -102,10 +106,11 @@ export const ModuleDetails = ({ productId, moduleId }: { productId: string, modu
 
           const moduleDoc = await getDoc(doc(db, `product/${productId}/modules`, moduleId));
           if (moduleDoc.exists()) {
-            const moduleData = moduleDoc.data() as { name: string; type: string; privacy: string; description: string; settings: string };
+            const moduleData = moduleDoc.data() as { name: string; type: string; emailTitle: string; privacy: string; description: string; settings: string };
             setModule(moduleData);
             setName(moduleData.name);
             setDescription(moduleData.description);
+            setEmailTitle(moduleData.emailTitle);
             setPrivacy(moduleData.privacy);
             setSettings(moduleData.settings);
           } else {
@@ -179,6 +184,9 @@ export const ModuleDetails = ({ productId, moduleId }: { productId: string, modu
         if (module.type === 'Formular-Modul' && privacy !== undefined) {
           updateData.privacy = privacy;
         }
+        else if (module.type === 'Formular-Modul' && emailTitle !== undefined) {
+          updateData.emailTitle = emailTitle;
+        }
         await updateDoc(doc(db, `product/${productId}/modules`, moduleId), updateData);
         toast.success('Module erfolgreich aktualisiert');
         setOpenSettingsDialog(false);
@@ -210,7 +218,8 @@ export const ModuleDetails = ({ productId, moduleId }: { productId: string, modu
       name !== module.name ||
       description !== module.description ||
       settings !== module.settings ||
-      (module.type === 'Formular-Modul' && privacy !== module.privacy)
+      (module.type === 'Formular-Modul' && privacy !== module.privacy) ||
+      (module.type === 'Formular-Modul' && emailTitle !== module.emailTitle)
     );
   };
 
@@ -299,6 +308,9 @@ export const ModuleDetails = ({ productId, moduleId }: { productId: string, modu
 
               {module && module.type === 'Formular-Modul' && (
                 <>
+                  <Label>Email Titel</Label>
+                  <Input className='mb-4 mt-1 w-full text-white placeholder:text-neutral-100/80' value={emailTitle} onChange={(e) => setEmailTitle(e.target.value)} placeholder='Sieht nur der Nutzer'/>
+
                   <Label>Datenschutzerklärung</Label>
                   <Input className='mb-4 mt-1 w-full text-white placeholder:text-neutral-100/80' value={privacy} onChange={(e) => setPrivacy(e.target.value)} placeholder='Datenschutzerklärung URL'/>
                 </>

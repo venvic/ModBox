@@ -13,6 +13,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { FaGrip, FaTrash, FaGears, FaPhone, FaFax, FaEnvelope, FaGlobe, FaLocationDot, FaRegFileLines, FaX } from 'react-icons/fa6';
 import { JSX } from 'react'
 import { getStorage, ref, uploadBytes, deleteObject, getDownloadURL } from "firebase/storage";
+import ImageSelector from '../imageSelector';
 
 type Kontakt = {
     sort: number;
@@ -82,7 +83,7 @@ const KontaktmodulEditor = ({ id, productId, onChangesSaved }: { id: string, pro
             const fieldsCollection = collection(db, `product/${productId}/modules/${id}/fields`);
             const snapshot = await getDocs(fieldsCollection);
             const fields = snapshot.docs.map(doc => doc.data() as Kontakt);
-            fields.sort((a, b) => a.sort - b.sort); // Sort by sort value
+            fields.sort((a, b) => a.sort - b.sort);
             setKontakte(fields);
             setNextSort(fields.length + 1);
         };
@@ -138,6 +139,8 @@ const KontaktmodulEditor = ({ id, productId, onChangesSaved }: { id: string, pro
             setNextSort((prev) => prev + 1);
         } catch (error) {
             console.error("Error saving contact to Firestore:", error);
+        }finally {
+            onChangesSaved();
         }
     };
 
@@ -240,7 +243,7 @@ const KontaktmodulEditor = ({ id, productId, onChangesSaved }: { id: string, pro
 
             setLogoUrl(downloadUrl);
             setOriginalLogoUrl(filePath);
-            setIsSaveEnabled(false);
+            setIsSaveEnabled(true);
         } catch (error) {
             console.error("Error uploading logo:", error);
         }
@@ -269,6 +272,18 @@ const KontaktmodulEditor = ({ id, productId, onChangesSaved }: { id: string, pro
         }
     };
 
+    const handleLogoSelect = async (url: string) => {
+        try {
+            const moduleDoc = doc(db, `product/${productId}/modules/${id}`);
+            await setDoc(moduleDoc, { logoUrl: url }, { merge: true });
+            setLogoUrl(url);
+            setOriginalLogoUrl(url);
+            setIsSaveEnabled(true);
+        } catch (error) {
+            console.error("Error setting logo URL:", error);
+        }
+    };
+
     return (
         <div className="flex flex-col w-full h-full relative divide-y">
             <div className="h-fit w-full gap-6 flex flex-row pb-16">
@@ -282,29 +297,16 @@ const KontaktmodulEditor = ({ id, productId, onChangesSaved }: { id: string, pro
                         <div className="h-32 w-32 rounded-sm bg-neutral-500" />
                     )}
                     <div className="flex w-full gap-2">
-                        <Button
-                            className="w-full text-center"
-                            onClick={() => {
-                                const input = document.createElement("input");
-                                input.type = "file";
-                                input.accept = "image/*";
-                                input.onchange = async (event: any) => {
-                                    const file = event.target.files[0];
-                                    if (file) {
-                                        await handleUploadLogo(file);
-                                    }
-                                };
-                                input.click();
-                            }}
-                        >
-                            Hochladen
-                        </Button>
+                        <ImageSelector
+                            moduleId={id}
+                            onImageSelect={handleLogoSelect}
+                        />
                         <Button
                             variant="destructive"
                             className="text-destructive-foreground px-3"
                             onClick={handleRemoveLogo}
-                            >
-                                <FaX className="max-h-3 max-w-3"/>
+                        >
+                            <FaX className="max-h-3 max-w-3" />
                         </Button>
                     </div>
                 </div>

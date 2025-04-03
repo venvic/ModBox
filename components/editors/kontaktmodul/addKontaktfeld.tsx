@@ -117,7 +117,7 @@ const KontaktDetailsDialog = ({
     onOpenChange: (open: boolean) => void;
     onSave: (kontakt: Omit<Kontakt, "id" | "sort"> | Kontakt) => void;
     kontaktToEdit?: Kontakt | null;
-    existingKontakte: Kontakt[]; // Ensure existingKontakte is passed
+    existingKontakte: Kontakt[]; 
     moduleId: string;
 }) => {
     const [selectedType, setSelectedType] = useState<string | null>(kontaktToEdit?.type || "Telefon");
@@ -172,8 +172,8 @@ const KontaktDetailsDialog = ({
             Object.entries(kontakt).filter(([_, v]) => v !== undefined)
         ) as Kontakt;
 
-        onSave(sanitizedKontakt); // Call the save function first
-        setTimeout(() => onOpenChange(false), 0); // Close the dialog after ensuring onSave is processed
+        onSave(sanitizedKontakt);
+        setTimeout(() => onOpenChange(false), 0);
     };
 
     const renderContentInput = () => {
