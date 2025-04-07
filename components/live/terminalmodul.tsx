@@ -18,6 +18,7 @@ type Tile = {
 }
 
 type Settings = {
+  theme: number
   backgroundImgUrl: string
   backgroundBlur: number
   tileBlur: number
@@ -102,6 +103,7 @@ const TerminalModule: React.FC<TerminalProps> = ({ product, module }) => {
   const [tiles, setTiles] = useState<Tile[]>([])
   const [loading, setLoading] = useState(true)
   const [currentTime, setCurrentTime] = useState<string>("")
+  const [activeTileIndex, setActiveTileIndex] = useState(0);
 
   useEffect(() => {
     const updateTime = () => {
@@ -163,6 +165,10 @@ const TerminalModule: React.FC<TerminalProps> = ({ product, module }) => {
   if (loading || !settings) {
     return <div className="h-screen w-screen bg-white" />
   }
+
+  const handleTileClick = (index: number) => {
+    setActiveTileIndex(index);
+  };
 
   const topBarContent = (
     <div className="flex items-center w-full gap-2">
@@ -243,23 +249,52 @@ const TerminalModule: React.FC<TerminalProps> = ({ product, module }) => {
           )}
         </div>
 
-        <div
-          className="flex-1 overflow-auto p-4 flex justify-center items-center"
-          style={{
-            gap: `${settings.tileGap}px`,
-          }}
-        >
+        {settings.theme === 1 ? (
+          <>
+            <div className="flex-1 flex items-center justify-center">
+              {tiles[activeTileIndex]?.url && (
+                <iframe
+                  src={tiles[activeTileIndex].url}
+                  className="w-full h-full"
+                  title="Tile Content"
+                />
+              )}
+            </div>
+            <div className="flex justify-center p-4" style={{ backgroundColor: `${settings.topBarColor}` }}>
+              {tiles.map((tile, index) => (
+                <button
+                  key={tile.id}
+                  style={{ color: `${settings.topBarTitleColor}`, backgroundColor: `${settings.tileColor}4C`, borderColor: `${settings.tileColor}4C` }}
+                  className={`flex flex-col items-center mx-2 px-4 py-2 pt-3 rounded-md ${
+                    activeTileIndex === index ? "border" : "border-none"
+                  }`}
+                  onClick={() => handleTileClick(index)}
+                >
+                  {React.createElement(allIcons[tile.icon as keyof typeof allIcons] || allIcons.FaSquare)}
+                  <span className="text-xs mt-1">{tile.title || "Untitled"}</span>
+                </button>
+              ))}
+            </div>
+          </>
+        ) : (
           <div
-            className="grid md:grid-cols-2"
+            className="flex-1 overflow-auto p-4 flex justify-center items-center"
             style={{
               gap: `${settings.tileGap}px`,
             }}
           >
-            {tiles.map((tile) => (
-              <TileComponent key={tile.id} tile={tile} tileColor={settings.tileColor} tileBlur={settings.tileBlur} tilePadding={settings.tilePadding} />
-            ))}
+            <div
+              className="grid md:grid-cols-2"
+              style={{
+                gap: `${settings.tileGap}px`,
+              }}
+            >
+              {tiles.map((tile) => (
+                <TileComponent key={tile.id} tile={tile} tileColor={settings.tileColor} tileBlur={settings.tileBlur} tilePadding={settings.tilePadding} />
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   )
