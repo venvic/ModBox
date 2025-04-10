@@ -147,23 +147,16 @@ export default function Page() {
    useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const response = await fetch('/api/handleUser', {
-          method: 'GET',
-          headers: {
-            Authorization: `Bearer ${await getAuth().currentUser?.getIdToken()}`
-          }
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setProjects(data.projects || []);
-          toast.success('Projekte erfolgreich abgerufen');
-        } else {
-          const errorData = await response.json();
-          toast.error('Fehler beim Abrufen der Projekte', { description: errorData.error });
-        }
+        const db = getFirestore();
+        const productsSnapshot = await getDocs(collection(db, 'product'));
+        const fetchedProjects = productsSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          name: doc.data().name,
+        }));
+        setProjects(fetchedProjects);
+        console.log('Fetched projects from Firestore:', fetchedProjects);
       } catch (error) {
-        console.error('Error fetching projects:', error);
+        console.error('Error fetching projects from Firestore:', error);
         toast.error('Fehler beim Abrufen der Projekte');
       }
     };
@@ -362,7 +355,7 @@ export default function Page() {
                         setSelectedProjects(selected.map((item) => item.value));
                       }
                     }}
-                    placeholder="Projekte auswählen"
+                    placeholder={projects.length > 0 ? "Projekte auswählen" : "Keine Projekte verfügbar"} // Safeguard for empty data
                   />
                 </div>
                 <div className='flex items-center gap-2 mt-2'>

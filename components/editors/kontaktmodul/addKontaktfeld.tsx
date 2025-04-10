@@ -213,7 +213,7 @@ const KontaktDetailsDialog = ({
             <DialogTrigger asChild>
                 <Button variant="secondary"><FaPlus /></Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="overflow-y-auto max-h-[calc(100vh-4rem)]">
                 <DialogHeader>
                     <DialogTitle>Kontakt Details hinzufügen</DialogTitle>
                     <DialogDescription>Fügen Sie die Details für den Kontakt hinzu.</DialogDescription>

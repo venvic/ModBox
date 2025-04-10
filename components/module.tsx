@@ -1,14 +1,14 @@
 'use client'
 import { auth, firebaseConfig } from '@/database';
 import { getApps, initializeApp } from 'firebase/app';
-import { doc, getFirestore, setDoc, getDoc, getDocs, collection, updateDoc } from 'firebase/firestore';
+import { doc, getFirestore, setDoc, getDoc, getDocs, collection, updateDoc, deleteDoc } from 'firebase/firestore';
 import React, { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogTitle } from './ui/dialog';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger } from './ui/select';
 import { Progress } from './ui/progress';
 import { Button } from './ui/button';
-import { FaCloudBolt, FaOutdent, FaMapLocationDot, FaFilePdf, FaClock, FaClipboardList, FaGear, FaChevronLeft, FaTablet, FaPhone, FaPeopleGroup } from "react-icons/fa6";
+import { FaOutdent, FaMapLocationDot, FaFilePdf, FaClock, FaClipboardList, FaGear, FaChevronLeft, FaTablet, FaPhone, FaPeopleGroup } from "react-icons/fa6";
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
 import { Textarea } from './ui/textarea';
@@ -17,6 +17,8 @@ import { Map, Marker, MapType, ColorScheme, FeatureVisibility } from 'mapkit-rea
 import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger } from "@/components/ui/navigation-menu"
 import getRandomId from '@/utils/getRandomId';
 import handleDelete from '@/utils/dataHandler';
+import { RiListSettingsLine, RiDeleteBinLine, RiEdit2Line } from "react-icons/ri";
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 
 if (!getApps().length) {
   initializeApp(firebaseConfig);
@@ -91,6 +93,19 @@ export const ModuleDialog = ({ isOpen, onClose, productId, refreshModules }: { i
     const [isMapDialogOpen, setIsMapDialogOpen] = useState(false);
     const [center, setCenter] = useState<{ latitude: number, longitude: number } | null>(null);
     const [slug, setSlug] = useState('');
+    const [userEmail, setUserEmail] = useState<string | null>(null);
+
+    useEffect(() => {
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (user) {
+          setUserEmail(user.email);
+        } else {
+          setUserEmail(null);
+        }
+      });
+    
+      return () => unsubscribe();
+    }, []);
 
     useEffect(() => {
       const fetchProductName = async () => {
@@ -162,8 +177,12 @@ export const ModuleDialog = ({ isOpen, onClose, productId, refreshModules }: { i
                   <SelectItem value='Offnungszeiten'>Öffnungszeiten</SelectItem>
                   <SelectItem value='Formular-Modul'>Formular Modul</SelectItem>
                   <SelectItem value='Kontakt-Modul'>Kontakt Modul</SelectItem>
-                  <SelectItem value='Beteiligungs-Modul'>Beteiligungs Modul</SelectItem>
-                  <SelectItem value='Terminal-Modul'>Terminal Modul</SelectItem>
+                  {(userEmail?.endsWith('@cosmema.de') || userEmail?.endsWith('@heimat-info.de')) && (
+                    <>
+                      <SelectItem value='Beteiligungs-Modul'>Beteiligungs Modul</SelectItem>
+                      <SelectItem value='Terminal-Modul'>Terminal Modul</SelectItem>
+                    </>
+                  )}
                 </SelectContent>
             </Select>
             {type === 'Kartenmodul' && (
@@ -265,48 +284,63 @@ export const EditProductDialog = ({ isOpen, onClose, product, refreshProduct }: 
 export const ProductModules = ({ productId }: { productId: string }) => {
   const [product, setProduct] = useState<{ name: string; slug: string; created: string } | null>(null);
   const [modules, setModules] = useState<{ id: string; name: string; type: string; description: string; settings: string }[]>([]);
+  const [categories, setCategories] = useState<{ id: string; name: string; modules: string[] }[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
   const router = useRouter();
   const [products, setProducts] = useState<{ id: string; name: string }[]>([]);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isAddCategoryDialogOpen, setIsAddCategoryDialogOpen] = useState(false);
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-          if (!user) {
-            router.push('/');
-          }
-        });
-    
-        return () => unsubscribe();
-    }, [router]);
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        router.push('/');
+      }
+    });
 
-    useEffect(() => {
-        const fetchProductAndModules = async () => {
-        try {
-            const productDoc = await getDoc(doc(db, 'product', productId));
-            if (productDoc.exists()) {
-            setProduct(productDoc.data() as { name: string; slug: string; created: string });
-            } else {
-            console.error('Product not found');
-            }
+    return () => unsubscribe();
+  }, [router]);
 
-            const querySnapshot = await getDocs(collection(db, `product/${productId}/modules`));
-            const modulesList = querySnapshot.docs.map(doc => {
-            const data = doc.data();
-            return { id: doc.id, name: data.name, type: data.type, description: data.description, settings: data.settings };
-            });
-            setModules(modulesList);
-        } catch (error) {
-            console.error('Error fetching product and modules: ', error);
-        } finally {
-            setLoading(false);
+  useEffect(() => {
+    const fetchProductData = async () => {
+      try {
+        const productDoc = await getDoc(doc(db, 'product', productId));
+        if (productDoc.exists()) {
+          setProduct(productDoc.data() as { name: string; slug: string; created: string });
+        } else {
+          console.error('Product not found');
         }
-        };
 
-        fetchProductAndModules();
-    }, [productId]);
+        const modulesSnapshot = await getDocs(collection(db, `product/${productId}/modules`));
+        const modulesList = modulesSnapshot.docs.map(doc => {
+          const data = doc.data();
+          return { id: doc.id, name: data.name, type: data.type, description: data.description, settings: data.settings };
+        });
+        setModules(modulesList);
+
+        const categoriesSnapshot = await getDocs(collection(db, `product/${productId}/categories`));
+        if (!categoriesSnapshot.empty) {
+          const categoriesList = categoriesSnapshot.docs.map(doc => {
+            const data = doc.data();
+            return { id: doc.id, name: data.name, modules: data.modules || [] };
+          });
+          setCategories(categoriesList);
+        }
+      } catch (error) {
+        console.error('Error fetching product data: ', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProductData();
+  }, [productId]);
 
   useEffect(() => {
     if (loading) {
@@ -356,7 +390,7 @@ export const ProductModules = ({ productId }: { productId: string }) => {
             const data = doc.data();
             return { id: doc.id, name: data.name, allowedUsers: data.allowedUsers || [] };
           })
-          .filter(product => product.allowedUsers.includes(auth.currentUser?.uid)); // Filter by user access
+          .filter(product => product.allowedUsers.includes(auth.currentUser?.uid));
         setProducts(productsList);
       } catch (error) {
         console.error('Error fetching products: ', error);
@@ -365,6 +399,98 @@ export const ProductModules = ({ productId }: { productId: string }) => {
 
     fetchProducts();
   }, []);
+
+  const handleAddCategory = async () => {
+    setEditingCategoryId(null);
+    setNewCategoryName('');
+
+    const id = getRandomId();
+    try {
+      await setDoc(doc(db, `product/${productId}/categories`, id), {
+        name: newCategoryName,
+        modules: [],
+      });
+      setNewCategoryName('');
+      setIsAddCategoryDialogOpen(false);
+      refreshCategories();
+    } catch (error) {
+      console.error('Error adding category: ', error);
+    }
+  };
+
+  const handleDeleteCategory = async (categoryId: string) => {
+    try {
+      await deleteDoc(doc(db, `product/${productId}/categories`, categoryId));
+      refreshCategories();
+    } catch (error) {
+      console.error('Error deleting category: ', error);
+    }
+  };
+
+  const handleRenameCategory = async (categoryId: string, newName: string) => {
+    try {
+      await updateDoc(doc(db, `product/${productId}/categories`, categoryId), { name: newName });
+      setEditingCategoryId(null);
+      refreshCategories();
+    } catch (error) {
+      console.error('Error renaming category: ', error);
+    }
+  };
+
+  const refreshCategories = async () => {
+    try {
+      const categoriesSnapshot = await getDocs(collection(db, `product/${productId}/categories`));
+      const categoriesList = categoriesSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return { id: doc.id, name: data.name, modules: data.modules || [] };
+      });
+      setCategories(categoriesList);
+    } catch (error) {
+      console.error('Error refreshing categories: ', error);
+    }
+  };
+
+  const handleMoveModule = async (moduleId: string, oldCategoryId: string | null, newCategoryId: string | null) => {
+    try {
+      if (oldCategoryId) {
+        const oldCategoryRef = doc(db, `product/${productId}/categories`, oldCategoryId);
+        const oldCategoryDoc = await getDoc(oldCategoryRef);
+        if (oldCategoryDoc.exists()) {
+          const oldModules = oldCategoryDoc.data().modules || [];
+          await updateDoc(oldCategoryRef, {
+            modules: oldModules.filter((id: string) => id !== moduleId),
+          });
+        }
+      }
+  
+      if (newCategoryId) {
+        const newCategoryRef = doc(db, `product/${productId}/categories`, newCategoryId);
+        const newCategoryDoc = await getDoc(newCategoryRef);
+        if (newCategoryDoc.exists()) {
+          const newModules = newCategoryDoc.data().modules || [];
+          await updateDoc(newCategoryRef, {
+            modules: [...newModules, moduleId],
+          });
+        }
+      }
+  
+      refreshCategories();
+    } catch (error) {
+      console.error('Error moving module: ', error);
+    }
+  };
+
+  // Filter modules based on the search query
+  const filteredModules = modules.filter((module) =>
+    module.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredCategories = categories.map((category) => ({
+    ...category,
+    modules: category.modules.filter((moduleId) =>
+      modules.find((mod) => mod.id === moduleId)?.name.toLowerCase().includes(searchQuery.toLowerCase())
+    ),
+  })).filter((category) => category.modules.length > 0);
 
   if (loading) {
     return (
@@ -402,7 +528,7 @@ export const ProductModules = ({ productId }: { productId: string }) => {
       <div className='max-w-[1900px] w-full p-4 md:p-12'>
         {product && (
           <>
-            <div className='mb-8 w-full flex justify-between items-center'>
+            <div className='mb-8 w-full flex gap-8 justify-between items-center'>
                 <div className='flex gap-2'>
                     <Button onClick={() => router.push(`/dashboard/`)}>
                       <FaChevronLeft />
@@ -426,27 +552,173 @@ export const ProductModules = ({ productId }: { productId: string }) => {
                     </NavigationMenu>
                 </div>
 
+                <div className='w-full'>
+                  <Input
+                    placeholder='Suchen...'
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className='w-full'
+                  />
+                </div>
+
                 <div className='flex gap-2'>
                     <Button onClick={() => setIsEditDialogOpen(true)}><FaGear/></Button>
-                    <Button variant='secondary' onClick={() => setIsDialogOpen(true)}>Create Module</Button>
+                    <Button
+                      onClick={() => setIsEditMode(!isEditMode)}
+                      className={isEditMode ? 'border border-secondary' : ''}
+                    >
+                      <RiListSettingsLine />
+                    </Button>
+                    <Button variant='secondary' onClick={() => setIsDialogOpen(true)}>Modul erstellen</Button>
                 </div>
             </div>
           </>
         )}
+        {isEditMode && (
+          <div className='mb-4 w-full py-3 bg-primary/50 flex justify-between items-center rounded-md px-4'>
+            <p><b>Bearbeitungsmodus:</b> Kategorien und Modulzuweisungen verwalten</p>
+            <Button
+              variant='secondary'
+              onClick={() => {
+                setEditingCategoryId(null);
+                setIsAddCategoryDialogOpen(true);
+              }}
+            >
+              Kategorie hinzufügen
+            </Button>
+          </div>
+        )}
         <EditProductDialog isOpen={isEditDialogOpen} onClose={() => setIsEditDialogOpen(false)} product={{ id: productId, name: product?.name || '' }} refreshProduct={refreshProduct} />
         <ModuleDialog isOpen={isDialogOpen} onClose={() => setIsDialogOpen(false)} productId={productId} refreshModules={refreshModules} />
-        {modules.length === 0 ? (
-          <div className='text-white text-center mt-8 h-full w-full flex items-center justify-center flex-col gap-2'><FaCloudBolt className='h-10 w-10'/> No modules found</div>
-        ) : (
-          <div className='w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-10'>
-            {modules.map((module) => (
-              <div key={module.id} className='bg-gray-500/15 p-4 rounded-lg flex flex-col text-center items-center cursor-pointer' onClick={() => router.push(`/dashboard/${productId}/modules/${module.id}`)}>
-                <div className='text-2xl rounded-full mb-2 p-5 bg-gray-500/20' style={{color: module.settings}}>{getIcon(module.type)}</div>
-                <div className='text-white text-lg'>{module.name}</div>
-                <div className='text-neutral-400'>{module.type}</div>
+        {filteredCategories.length > 0 ? (
+          <>
+            {filteredCategories.map((category) => (
+              <div key={category.id} className='mb-8'>
+                <div className='text-white flex items-center gap-4 text-xl font-semibold mb-4'>
+                  {editingCategoryId === category.id ? (
+                    <input
+                      type='text'
+                      value={newCategoryName}
+                      onChange={(e) => setNewCategoryName(e.target.value)}
+                      onKeyDown={(e) => e.stopPropagation()}
+                      onBlur={() => handleRenameCategory(category.id, newCategoryName)}
+                      className='border bg-transparent text-white p-2 rounded'
+                    />
+                  ) : (
+                    <span>{category.name}</span>
+                  )}
+                  <div className='w-full h-[1px] bg-border' />
+                  {isEditMode && (
+                    <>
+                      <Button onClick={() => setEditingCategoryId(category.id)}>
+                        <RiEdit2Line />
+                      </Button>
+                      <Button variant='destructive' onClick={() => handleDeleteCategory(category.id)}>
+                        <RiDeleteBinLine />
+                      </Button>
+                    </>
+                  )}
+                </div>
+                <div className='w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4'>
+                  {category.modules.map((moduleId) => {
+                    const module = modules.find((mod) => mod.id === moduleId);
+                    return module ? (
+                      <div
+                        key={module.id}
+                        className={`bg-gray-500/15 p-4 rounded-lg flex flex-col text-center items-center relative ${!isEditMode ? 'cursor-pointer' : ''}`}
+                        onClick={() => !isEditMode && router.push(`/dashboard/${productId}/modules/${module.id}`)}
+                      >
+                        <div className='text-2xl rounded-full mb-2 p-5 bg-gray-500/20' style={{ color: module.settings }}>{getIcon(module.type)}</div>
+                        <div className='text-white text-lg'>{module.name}</div>
+                        <div className='text-neutral-400'>{module.type}</div>
+                        {isEditMode && (
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button className='border mt-3'>Verschieben</Button>
+                            </PopoverTrigger>
+                            <PopoverContent>
+                              <div className='flex flex-col gap-2'>
+                                {categories
+                                  .filter((cat) => cat.id !== category.id)
+                                  .map((cat) => (
+                                    <Button
+                                      key={cat.id}
+                                      onClick={() => handleMoveModule(module.id, category.id, cat.id)}
+                                    >
+                                      {cat.name}
+                                    </Button>
+                                  ))}
+                                <Button
+                                  onClick={() => handleMoveModule(module.id, category.id, null)}
+                                >
+                                  Unkategorisiert
+                                </Button>
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                        )}
+                      </div>
+                    ) : null;
+                  })}
+                </div>
               </div>
             ))}
-          </div>
+            <div className='w-full h-[1px] bg-border' />
+          </>
+        ) : null}
+        <div className='w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-10'>
+          {filteredModules
+            .filter((module) => !categories.some((category) => category.modules.includes(module.id)))
+            .map((module) => (
+              <div
+                key={module.id}
+                className={`bg-gray-500/15 p-4 rounded-lg flex flex-col text-center items-center relative ${!isEditMode ? 'cursor-pointer' : ''}`}
+                onClick={() => !isEditMode && router.push(`/dashboard/${productId}/modules/${module.id}`)}
+              >
+                <div className='text-2xl rounded-full mb-2 p-5 bg-gray-500/20' style={{ color: module.settings }}>{getIcon(module.type)}</div>
+                <div className='text-white text-lg'>{module.name}</div>
+                <div className='text-neutral-400'>{module.type}</div>
+                {isEditMode && (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button className='border mt-4'>Verschieben</Button>
+                    </PopoverTrigger>
+                    <PopoverContent>
+                      <div className='flex flex-col gap-2'>
+                        {categories.map((cat) => (
+                          <Button
+                            key={cat.id}
+                            onClick={() => handleMoveModule(module.id, null, cat.id)}
+                          >
+                            {cat.name}
+                          </Button>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                )}
+              </div>
+            ))}
+        </div>
+        {isAddCategoryDialogOpen && (
+          <Dialog open={isAddCategoryDialogOpen} onOpenChange={setIsAddCategoryDialogOpen}>
+            <DialogContent>
+              <DialogTitle>Kategorie hinzufügen</DialogTitle>
+              <Input
+                type='text'
+                placeholder='Kategoriename'
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                className='w-full mt-4'
+              />
+              <DialogFooter>
+                <Button onClick={() => setIsAddCategoryDialogOpen(false)}>Abbrechen</Button>
+                <Button variant='secondary' onClick={handleAddCategory}>
+                  Hinzufügen
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         )}
       </div>
     </div>

@@ -116,7 +116,7 @@ const EditKontaktDialog = ({
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent>
+            <DialogContent className="overflow-y-auto max-h-[calc(100vh-4rem)]">
                 <DialogHeader>
                     <DialogTitle>Kontakt bearbeiten</DialogTitle>
                     <DialogDescription>Bearbeiten Sie die Details für diesen Kontakt.</DialogDescription>

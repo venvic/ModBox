@@ -284,6 +284,26 @@ const KontaktmodulEditor = ({ id, productId, onChangesSaved }: { id: string, pro
         }
     };
 
+    const handleSaveModuleDetails = async () => {
+        try {
+            const moduleDoc = doc(db, `product/${productId}/modules/${id}`);
+            await setDoc(moduleDoc, { name: moduleName, description: moduleDescription }, { merge: true });
+            setOriginalModuleName(moduleName);
+            setOriginalModuleDescription(moduleDescription);
+            setIsSaveEnabled(false);
+        } catch (error) {
+            console.error("Error saving module details:", error);
+        }
+    };
+
+    const handleOpenEditDialog = async (kontakt: Kontakt) => {
+        if (isSaveEnabled) {
+            await handleSaveModuleDetails();
+        }
+        setSelectedKontakt(kontakt);
+        setIsEditDialogOpen(true);
+    };
+
     return (
         <div className="flex flex-col w-full h-full relative divide-y">
             <div className="h-fit w-full gap-6 flex flex-row pb-16">
@@ -369,10 +389,7 @@ const KontaktmodulEditor = ({ id, productId, onChangesSaved }: { id: string, pro
                                             </div>
                                             <button
                                                 className="text-neutral-400"
-                                                onClick={() => {
-                                                    setSelectedKontakt(kontakt);
-                                                    setIsEditDialogOpen(true);
-                                                }}
+                                                onClick={() => handleOpenEditDialog(kontakt)}
                                             >
                                                 <FaGears />
                                             </button>
