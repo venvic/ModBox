@@ -68,19 +68,31 @@ const Statistics = () => {
     pageViews: product.pageViews,
   }));
 
+  const getBarFillColor = () => {
+    const theme = document.documentElement.getAttribute("data-theme");
+    switch (theme) {
+      case "cosmema":
+        return "#D97706"; // Amber-like color
+      case "minimal":
+        return "#A8A29E"; // Gray-like color
+      default:
+        return "#6A6D95"; // Default for "modern"
+    }
+  };
+
   return (
     <div className='flex flex-col h-fit gap-4 border rounded-lg mt-4'>
       <div className='h-fit flex border-b w-full px-7'>
         <div className='py-8 w-2/4'>
           <h2 className='font-semibold text-lg'>Nutzung</h2>
-          <p className='text-sm text-white/60'>Aktive und inaktive Module sowie Lese- und Schreibvorgänge.</p>
+          <p className='text-sm text-foreground/60'>Aktive und inaktive Module sowie Lese- und Schreibvorgänge.</p>
         </div>
         <div className='py-8 pl-10 border-l border-r w-1/4 bg-muted'>
-          <p className='text-xs text-white/60'>Module</p>
+          <p className='text-xs text-foreground/60'>Module</p>
           <h3 className='text-2xl font-bold'>{totalModulesCount}</h3>
         </div>
         <div className='py-8 pl-10 w-1/4 select-none'>
-          <p className='text-xs text-white/60'>Lesevorgänge</p>
+          <p className='text-xs text-foreground/60'>Lesevorgänge</p>
           <h3 className='text-2xl font-bold'>{reads.toLocaleString('de-DE')}</h3>
         </div>
       </div>
@@ -96,7 +108,7 @@ const Statistics = () => {
             />
             <ChartTooltip content={<ChartTooltipContent />} />
             <ChartLegend content={<ChartLegendContent />} />
-            <Bar dataKey="modulesCount" fill="#6A6D95" radius={3} />
+            <Bar dataKey="modulesCount" fill={getBarFillColor()} radius={3} />
           </BarChart>
         </ChartContainer>
       </div>

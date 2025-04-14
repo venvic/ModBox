@@ -253,7 +253,7 @@ export const ModuleDetails = ({ productId, moduleId }: { productId: string, modu
                         <NavigationMenuTrigger className='text-base font-medium'>{module?.name}</NavigationMenuTrigger>
                         <NavigationMenuContent className='divide-y divide-white/10'>
                           {modules.map((mod) => (
-                            <NavigationMenuLink className='flex flex-row min-w-44 w-fit hover:bg-primary bg-card-foreground border-border text-white text-sm py-2 px-3 cursor-pointer' key={mod.id} onClick={() => router.push(`/dashboard/${productId}/modules/${mod.id}`)}>
+                            <NavigationMenuLink className='flex flex-row min-w-44 w-fit hover:bg-primary bg-card-foreground border-border text-foreground text-sm py-2 px-3 cursor-pointer' key={mod.id} onClick={() => router.push(`/dashboard/${productId}/modules/${mod.id}`)}>
                               {mod.name}
                             </NavigationMenuLink>
                           ))}
@@ -272,7 +272,7 @@ export const ModuleDetails = ({ productId, moduleId }: { productId: string, modu
             </div>
 
             <div className='flex flex-col w-full'>
-              <div className='text-white h-fit w-full flex'>
+              <div className='text-foreground h-fit w-full flex'>
                 <div className='w-full md:pr-4'>
                   {getEditorComponent(productId, moduleId, module.type, handleChangesSaved)}
                 </div>
@@ -284,7 +284,7 @@ export const ModuleDetails = ({ productId, moduleId }: { productId: string, modu
             </div>
           </div>
         ) : (
-          <div className='text-white text-center mt-8 h-full w-full flex items-center justify-center flex-col gap-2'>
+          <div className='text-foreground text-center mt-8 h-full w-full flex items-center justify-center flex-col gap-2'>
             <p>Module not found</p>
           </div>
         )}
@@ -297,27 +297,27 @@ export const ModuleDetails = ({ productId, moduleId }: { productId: string, modu
               </VisuallyHidden>
               <h1 className='mb-6 font-semibold'>Modul Einstellungen</h1>
               <Label>Modul Name</Label>
-              <Input className='mb-4 mt-1 w-full text-white placeholder:text-neutral-100/80' value={name} onChange={(e) => setName(e.target.value)} placeholder='Modulname'/>
+              <Input className='mb-4 mt-1 w-full text-foreground placeholder:text-neutral-100/80' value={name} onChange={(e) => setName(e.target.value)} placeholder='Modulname'/>
 
               <Label>Modul Beschreibung</Label>
               {module && module.type === 'PDF-Modul' ? (
-                <Textarea className='mb-4 mt-1 w-full text-white placeholder:text-neutral-100/80' value={description} onChange={(e) => setDescription(e.target.value)} placeholder='Beschreibung'/>
+                <Textarea className='mb-4 mt-1 w-full text-foreground placeholder:text-neutral-100/80' value={description} onChange={(e) => setDescription(e.target.value)} placeholder='Beschreibung'/>
               ) : (
-                <Input className='mb-4 mt-1 w-full text-white placeholder:text-neutral-100/80' value={description} onChange={(e) => setDescription(e.target.value)} placeholder='Beschreibung'/>
+                <Input className='mb-4 mt-1 w-full text-foreground placeholder:text-neutral-100/80' value={description} onChange={(e) => setDescription(e.target.value)} placeholder='Beschreibung'/>
               )}
 
               {module && module.type === 'Formular-Modul' && (
                 <>
                   <Label>Email Titel</Label>
-                  <Input className='mb-4 mt-1 w-full text-white placeholder:text-neutral-100/80' value={emailTitle} onChange={(e) => setEmailTitle(e.target.value)} placeholder='Sieht nur der Nutzer'/>
+                  <Input className='mb-4 mt-1 w-full text-foreground placeholder:text-neutral-100/80' value={emailTitle} onChange={(e) => setEmailTitle(e.target.value)} placeholder='Sieht nur der Nutzer'/>
 
                   <Label>Datenschutzerklärung</Label>
-                  <Input className='mb-4 mt-1 w-full text-white placeholder:text-neutral-100/80' value={privacy} onChange={(e) => setPrivacy(e.target.value)} placeholder='Datenschutzerklärung URL'/>
+                  <Input className='mb-4 mt-1 w-full text-foreground placeholder:text-neutral-100/80' value={privacy} onChange={(e) => setPrivacy(e.target.value)} placeholder='Datenschutzerklärung URL'/>
                 </>
               )}
 
               <Label>Modul Farbe</Label>
-              <Input className='mb-4 mt-1 w-full text-white placeholder:text-neutral-100/80' value={settings} onChange={(e) => setSettings(e.target.value)} placeholder='#000000'/>
+              <Input className='mb-4 mt-1 w-full text-foreground placeholder:text-neutral-100/80' value={settings} onChange={(e) => setSettings(e.target.value)} placeholder='#000000'/>
               
               <div className='w-full flex justify-between'>
                 {hasChanges() ? (

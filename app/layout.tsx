@@ -5,6 +5,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/ui/app-slidebar";
+import { ThemeProvider } from "@/components/theme-provider";
 import { useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/database";
@@ -54,11 +55,13 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <SidebarProvider defaultOpen={false}>
-          {isAuthenticated && showSidebar && <AppSidebar />}
-          {children}
-          <Toaster />
-        </SidebarProvider>
+        <ThemeProvider>
+          <SidebarProvider defaultOpen={false}>
+            {isAuthenticated && showSidebar && <AppSidebar />}
+            {children}
+            <Toaster />
+          </SidebarProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

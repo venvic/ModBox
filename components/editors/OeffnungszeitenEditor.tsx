@@ -121,7 +121,7 @@ const OeffnungszeitenEditor = ({ id, productId, onChangesSaved }: { id: string, 
               checked={!day.closed}
               onCheckedChange={(checked) => handleTimeChange(index, 'closed', !checked)}
             />
-            <h3 className='text-white'>{day.name}</h3>
+            <h3 className='text-foreground'>{day.name}</h3>
           </div>
           <Button onClick={() => { setCurrentDay(day); setIsDialogOpen(true); }}>
             <FaGear />
@@ -133,7 +133,7 @@ const OeffnungszeitenEditor = ({ id, productId, onChangesSaved }: { id: string, 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent>
             <DialogTitle>Bearbeite {currentDay.name}</DialogTitle>
-            <DialogDescription className='text-white/40'>
+            <DialogDescription className='text-foreground/40'>
               <Label>Öffnung:</Label>
               <Input
                 type="time"
@@ -144,7 +144,7 @@ const OeffnungszeitenEditor = ({ id, productId, onChangesSaved }: { id: string, 
                   handleTimeChange(currentDay.sort - 1, 'open', e.target.value);
                 }}
                 disabled={currentDay.closed}
-                className='text-white placeholder:text-white/40 mt-1 mb-4'
+                className='text-foreground placeholder:text-foreground/40 mt-1 mb-4'
                 step="900" // 15-minute intervals
                 pattern="[0-9]{2}:[0-9]{2}" // 24-hour format
               />
@@ -158,7 +158,7 @@ const OeffnungszeitenEditor = ({ id, productId, onChangesSaved }: { id: string, 
                   handleTimeChange(currentDay.sort - 1, 'close', e.target.value);
                 }}
                 disabled={currentDay.closed}
-                className='text-white placeholder:text-white/40 mt-1 mb-4'
+                className='text-foreground placeholder:text-foreground/40 mt-1 mb-4'
                 step="900" // 15-minute intervals
                 pattern="[0-9]{2}:[0-9]{2}" // 24-hour format
               />
@@ -191,7 +191,7 @@ const OeffnungszeitenEditor = ({ id, productId, onChangesSaved }: { id: string, 
                       setCurrentDay(newDay);
                       handleBreakChange(currentDay.sort - 1, breakIndex, 'start', e.target.value);
                     }}
-                    className='text-white placeholder:text-white/40 mt-1 mb-4'
+                    className='text-foreground placeholder:text-foreground/40 mt-1 mb-4'
                     step="900" // 15-minute intervals
                     pattern="[0-9]{2}:[0-9]{2}" // 24-hour format
                     disabled={brk.start === '00:00' && brk.end === '00:00'}
@@ -207,7 +207,7 @@ const OeffnungszeitenEditor = ({ id, productId, onChangesSaved }: { id: string, 
                       setCurrentDay(newDay);
                       handleBreakChange(currentDay.sort - 1, breakIndex, 'end', e.target.value);
                     }}
-                    className='text-white placeholder:text-white/40 mt-1 mb-4'
+                    className='text-foreground placeholder:text-foreground/40 mt-1 mb-4'
                     step="900" // 15-minute intervals
                     pattern="[0-9]{2}:[0-9]{2}" // 24-hour format
                     disabled={brk.start === '00:00' && brk.end === '00:00'}

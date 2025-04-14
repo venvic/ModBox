@@ -97,7 +97,7 @@ const ImageDialog = ({ isOpen, onOpenChange, onSelectImage, moduleId }: {
                                     }}
                                 />
                                 <button
-                                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full px-1 text-[10px] font-bold"
+                                    className="absolute top-1 right-1 bg-red-500 text-foreground rounded-full px-1 text-[10px] font-bold"
                                     onClick={() => handleDelete(path)}
                                 >
                                     X

@@ -331,7 +331,7 @@ const ObjectsEditor = ({ moduleId, productId, categories, onChangesSaved, filter
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder='Beschreibung'
-                    className='text-white placeholder:text-neutral-400/50 mb-6 mt-2'
+                    className='text-foreground placeholder:text-neutral-400/50 mb-6 mt-2'
                   />
                 </div>
                 {fields.map((field, index) => (
@@ -340,17 +340,17 @@ const ObjectsEditor = ({ moduleId, productId, categories, onChangesSaved, filter
                       value={field.name}
                       onChange={(e) => handleFieldChange(index, 'name', e.target.value)}
                       placeholder="Feldname"
-                      className='text-white placeholder:text-neutral-400/50'
+                      className='text-foreground placeholder:text-neutral-400/50'
                     />
                     {field.list ? (
-                      <Textarea value={field.value} onChange={(e) => handleFieldChange(index, 'value', e.target.value)} placeholder="Liste" className='text-white placeholder:text-neutral-400/50'/>
+                      <Textarea value={field.value} onChange={(e) => handleFieldChange(index, 'value', e.target.value)} placeholder="Liste" className='text-foreground placeholder:text-neutral-400/50'/>
                     ) : field.address ? (
                       <div className='flex flex-col gap-2 h-fit relative'>
                           <Input
                             value={field.value}
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {handleFieldChange(index, 'value', e.target.value);}}
                             placeholder="Adresse"
-                            className='text-white placeholder:text-neutral-400/50'
+                            className='text-foreground placeholder:text-neutral-400/50'
                           />
   
                           <AddressSelector onAddressSelect={(address, coordinates) => handleAddressSelect(index, address, coordinates)} />
@@ -360,17 +360,17 @@ const ObjectsEditor = ({ moduleId, productId, categories, onChangesSaved, filter
                         value={field.value}
                         onChange={(e) => handleFieldChange(index, 'value', e.target.value)}
                         placeholder="Feldwert"
-                        className='text-white placeholder:text-neutral-400/50'
+                        className='text-foreground placeholder:text-neutral-400/50'
                       />
                     )}
                     <div className='flex justify-between gap-2'>
                         <Popover>
                           <PopoverTrigger asChild>
-                            <Button variant="outline" className='text-white'>
+                            <Button variant="outline" className='text-foreground'>
                               {field.icon ? React.createElement(FaIcons[field.icon as keyof typeof FaIcons]) : <FaIcons.FaImage />}
                             </Button>
                           </PopoverTrigger>
-                          <PopoverContent className="w-64 p-4 overflow-scroll bg-background fill-white text-white">
+                          <PopoverContent className="w-64 p-4 overflow-scroll bg-background fill-white text-foreground">
                             <Input
                               value={iconSearch}
                               onChange={(e) => setIconSearch(e.target.value)}
@@ -473,12 +473,12 @@ const ObjectsEditor = ({ moduleId, productId, categories, onChangesSaved, filter
           <SortableContext items={objects.map(obj => obj.id)} strategy={verticalListSortingStrategy}>
             {categories.map(category => (
               <div key={category.id} className="mb-4">
-                <h3 className="text-md mt-5 font-semibold text-white flex gap-4 items-center">{category.name} <div className='flex-1 h-[1px] bg-white/10'/></h3>
+                <h3 className="text-md mt-5 font-semibold text-foreground flex gap-4 items-center">{category.name} <div className='flex-1 h-[1px] bg-white/10'/></h3>
                 {filteredObjects(objects).filter(obj => obj.category === category.id).map((obj, index) => (
                   <SortableItem key={obj.id} id={obj.id}>
                     {(listeners: any) => (
                       <div className={`flex py-[6px] gap-2 items-center border-[#ffffff14] border-b overflow-hidden ${obj.isDeleted ? 'opacity-50' : ''}`}>
-                        <span className='handle text-white mr-4' {...listeners}><FaGrip /></span>
+                        <span className='handle text-foreground mr-4' {...listeners}><FaGrip /></span>
                         <div className='flex-1'>
                           <p className='text-neutral-100/80 text-sm'>{obj.name}</p>
                         </div>

@@ -39,7 +39,7 @@ const FilialfinderEditor = ({ id, productId, onChangesSaved }: { id: string, pro
       <div className='w-full flex gap-4'>
         <Input 
           placeholder='Suche...' 
-          className='text-white placeholder:text-neutral-100/50'
+          className='text-foreground placeholder:text-neutral-100/50'
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />

@@ -1,11 +1,11 @@
 'use client'
 import { Calendar, ChevronUp, Home, Inbox, Plus, Search, Settings, User, Users } from "lucide-react"
 import { useState, useEffect } from "react"
-import { Dialog, DialogContent, DialogTrigger } from "./dialog"
 import { getAuth, onAuthStateChanged } from 'firebase/auth'
 import { getFirestore, collection, getDocs, doc, getDoc } from 'firebase/firestore'
 import { initializeApp, getApps } from 'firebase/app'
 import { auth, firebaseConfig } from '@/database'
+import { ThemeSelector } from '@/components/theme-selector'
 
 import {
   Sidebar,
@@ -63,9 +63,9 @@ export function AppSidebar() {
         const modulesCollection = collection(db, 'product', doc.id, 'modules')
         const modulesSnapshot = await getDocs(modulesCollection)
         return {
-            name: doc.data().name,
-            id: doc.id,
-            modulesCount: modulesSnapshot.size,
+          name: doc.data().name,
+          id: doc.id,
+          modulesCount: modulesSnapshot.size,
         }
       }))
       setProduct(products)
@@ -75,6 +75,7 @@ export function AppSidebar() {
       const auth = getAuth()
       onAuthStateChanged(auth, async (user) => {
         if (user) {
+          setUserEmail(user.email);
           const userDoc = await getDoc(doc(db, `/global/users/${user.uid}/info`))
           const projects = userDoc.exists() ? userDoc.data().projects : null
           setShowGemeinden(projects === "all")
@@ -115,11 +116,10 @@ export function AppSidebar() {
                       </SidebarMenuButton>
                     </CollapsibleTrigger>
                     <CollapsibleContent>
-                      <SidebarMenuSub>
+                      <SidebarMenuSub className="divide-y">
                         {product.map((product) => (
-                          <SidebarMenuSubItem key={product.id} className="flex py-[2px] cursor-pointer" onClick={() => router.push(`/dashboard/${product.id}`)}>
+                          <SidebarMenuSubItem key={product.id} className="flex pb-[1px] pt-[6px] cursor-pointer" onClick={() => router.push(`/dashboard/${product.id}`)}>
                             {product.name}
-                            <SidebarMenuBadge>{product.modulesCount}</SidebarMenuBadge>
                           </SidebarMenuSubItem>
                         ))}
                       </SidebarMenuSub>
@@ -141,7 +141,16 @@ export function AppSidebar() {
                   <ChevronUp className="ml-auto" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
-              <DropdownMenuContent side="top" className="w-[--radix-popper-anchor-width] hover:bg-destructive transition-all cursor-pointer">
+              <DropdownMenuContent
+                side="top"
+                className="w-[--radix-popper-anchor-width]"
+                onClick={(e) => e.stopPropagation()} 
+              >
+                <DropdownMenuItem>
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <ThemeSelector />
+                  </div>
+                </DropdownMenuItem>
                 <DropdownMenuItem className="px-2 py-1 text-destructive-foreground" onClick={() => auth.signOut()}>
                   <span>Logout</span>
                 </DropdownMenuItem>

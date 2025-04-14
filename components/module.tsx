@@ -1,14 +1,14 @@
 'use client'
 import { auth, firebaseConfig } from '@/database';
 import { getApps, initializeApp } from 'firebase/app';
-import { doc, getFirestore, setDoc, getDoc, getDocs, collection, updateDoc, deleteDoc } from 'firebase/firestore';
-import React, { useState, useEffect } from 'react'
+import { doc, getFirestore, setDoc, getDoc, getDocs, collection, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
+import React, { useState, useEffect, JSX } from 'react'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogTitle } from './ui/dialog';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger } from './ui/select';
 import { Progress } from './ui/progress';
 import { Button } from './ui/button';
-import { FaOutdent, FaMapLocationDot, FaFilePdf, FaClock, FaClipboardList, FaGear, FaChevronLeft, FaTablet, FaPhone, FaPeopleGroup } from "react-icons/fa6";
+import { FaOutdent, FaMapLocationDot, FaFilePdf, FaClock, FaClipboardList, FaGear, FaChevronLeft, FaTablet, FaPhone, FaPeopleGroup, FaGripVertical } from "react-icons/fa6";
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
 import { Textarea } from './ui/textarea';
@@ -19,6 +19,10 @@ import getRandomId from '@/utils/getRandomId';
 import handleDelete from '@/utils/dataHandler';
 import { RiListSettingsLine, RiDeleteBinLine, RiEdit2Line } from "react-icons/ri";
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { DndContext, closestCenter } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 if (!getApps().length) {
   initializeApp(firebaseConfig);
@@ -57,7 +61,7 @@ const MapDialog = ({ isOpen, onClose, onSelectLocation, slug }: { isOpen: boolea
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
-        <DialogTitle className='text-white'>Stadtmitte auswählen</DialogTitle>
+        <DialogTitle className='text-foreground'>Stadtmitte auswählen</DialogTitle>
         <div className='w-full h-96'>
             <Map 
             colorScheme={ColorScheme.Dark} 
@@ -155,8 +159,8 @@ export const ModuleDialog = ({ isOpen, onClose, productId, refreshModules }: { i
       <>
         <Dialog open={isOpen} onOpenChange={onClose}>
           <DialogContent>
-            <DialogTitle className='text-white'>Modul hinzufügen</DialogTitle>
-            <DialogDescription className='text-neutral-300'>
+            <DialogTitle className='text-foreground'>Modul hinzufügen</DialogTitle>
+            <DialogDescription className='text-foreground/60'>
               Bitte geben Sie die folgenden Informationen ein:
             </DialogDescription>
             <Input
@@ -164,10 +168,10 @@ export const ModuleDialog = ({ isOpen, onClose, productId, refreshModules }: { i
               placeholder='Name'
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className='w-full text-white placeholder:text-neutral-400'
+              className='w-full text-foreground placeholder:text-neutral-400'
             />
             <Select value={type} onValueChange={setType}>
-              <SelectTrigger className='w-full text-white placeholder:text-neutral-400 mt-4'>
+              <SelectTrigger className='w-full text-foreground placeholder:text-neutral-400 mt-4'>
                 <SelectValue placeholder="Modul Art" />
               </SelectTrigger>
               <SelectContent>
@@ -191,16 +195,16 @@ export const ModuleDialog = ({ isOpen, onClose, productId, refreshModules }: { i
               </Button>
             )}
             {type === 'PDF-Modul' ? (
-                <Textarea className='w-full text-white placeholder:text-neutral-400 mt-4' value={description} onChange={(e) => setDescription(e.target.value)} placeholder='Beschreibung'/>
+                <Textarea className='w-full text-foreground placeholder:text-neutral-400 mt-4' value={description} onChange={(e) => setDescription(e.target.value)} placeholder='Beschreibung'/>
               ) : (
-                <Input className='w-full text-white placeholder:text-neutral-400 mt-4' value={description} onChange={(e) => setDescription(e.target.value)} placeholder='Beschreibung'/>
+                <Input className='w-full text-foreground placeholder:text-neutral-400 mt-4' value={description} onChange={(e) => setDescription(e.target.value)} placeholder='Beschreibung'/>
             )}
             <Input
               type='text'
               placeholder='Farbe (#000000)'
               value={settings}
               onChange={(e) => setSettings(e.target.value)}
-              className='w-full text-white placeholder:text-neutral-400 mt-4'
+              className='w-full text-foreground placeholder:text-neutral-400 mt-4'
             />
             <DialogFooter className='mt-8'>
               <Button onClick={onClose}>Abbrechen</Button>
@@ -218,6 +222,7 @@ export const EditProductDialog = ({ isOpen, onClose, product, refreshProduct }: 
   const [loading, setLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
   const router = useRouter();
 
   const handleSave = async () => {
@@ -246,45 +251,71 @@ export const EditProductDialog = ({ isOpen, onClose, product, refreshProduct }: 
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
-        <DialogTitle className='text-white'>Produkt bearbeiten</DialogTitle>
-        <DialogDescription className='text-neutral-300'>
-          Passen Sie den Produktnamen an oder löschen Sie das Produkt.
-        </DialogDescription>
-        <Input
-          type='text'
-          placeholder='Name'
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className='w-full text-white placeholder:text-neutral-400'
-        />
-        <DialogFooter className='flex w-full mt-4'>
-          {confirmDelete ? (
+    <>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent>
+          <DialogTitle className='text-foreground'>Produkt bearbeiten</DialogTitle>
+          <DialogDescription className='text-foreground/60'>
+            Passen Sie den Produktnamen an oder löschen Sie das Produkt.
+          </DialogDescription>
+          <Input
+            type='text'
+            placeholder='Name'
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className='w-full text-foreground placeholder:text-neutral-400'
+          />
+          <DialogFooter className='flex w-full mt-4'>
+            <Button variant='destructive' onClick={() => setIsDeleteConfirmationOpen(true)}>
+              Löschen
+            </Button>
+            <div className='flex flex-1 justify-end gap-4'>
+              <Button onClick={onClose}>Abbrechen</Button>
+              <Button variant='secondary' onClick={handleSave} disabled={loading}>
+                {loading ? 'Speichern...' : 'Speichern'}
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={isDeleteConfirmationOpen} onOpenChange={setIsDeleteConfirmationOpen}>
+        <DialogContent>
+          <DialogTitle className='text-foreground'>Löschen bestätigen</DialogTitle>
+          <DialogDescription className='text-neutral-300'>
+            Sind Sie sicher, dass Sie dieses Produkt löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.
+          </DialogDescription>
+          <DialogFooter>
+            <Button onClick={() => setIsDeleteConfirmationOpen(false)}>Abbrechen</Button>
             <Button variant='destructive' onClick={() => handleDeleteProduct(product.id)} disabled={deleteLoading}>
               {deleteLoading ? 'Löschen...' : 'Löschen'}
             </Button>
-          ) : (
-            <Button variant='destructive' onClick={() => setConfirmDelete(true)}>
-              Löschen
-            </Button>
-          )}
-          <div className='flex flex-1 justify-end gap-4'>
-            <Button onClick={onClose}>Abbrechen</Button>
-            <Button variant='secondary' onClick={handleSave} disabled={loading}>
-              {loading ? 'Speichern...' : 'Speichern'}
-            </Button>
-          </div>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+};
+
+const SortableCategory = ({ id, children }: { id: string, children: (listeners: any) => JSX.Element }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes}>
+      {children(listeners)}
+    </div>
   );
 };
 
 export const ProductModules = ({ productId }: { productId: string }) => {
   const [product, setProduct] = useState<{ name: string; slug: string; created: string } | null>(null);
   const [modules, setModules] = useState<{ id: string; name: string; type: string; description: string; settings: string }[]>([]);
-  const [categories, setCategories] = useState<{ id: string; name: string; modules: string[] }[]>([]);
+  const [categories, setCategories] = useState<{ id: string; name: string; modules: string[], sort: number }[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -328,7 +359,7 @@ export const ProductModules = ({ productId }: { productId: string }) => {
         if (!categoriesSnapshot.empty) {
           const categoriesList = categoriesSnapshot.docs.map(doc => {
             const data = doc.data();
-            return { id: doc.id, name: data.name, modules: data.modules || [] };
+            return { id: doc.id, name: data.name, modules: data.modules || [], sort: data.sort || 0 };
           });
           setCategories(categoriesList);
         }
@@ -400,30 +431,69 @@ export const ProductModules = ({ productId }: { productId: string }) => {
     fetchProducts();
   }, []);
 
+  const handleDragEnd = async (event: any) => {
+    const { active, over } = event;
+    if (active.id !== over.id) {
+      const oldIndex = categories.findIndex((category) => category.id === active.id);
+      const newIndex = categories.findIndex((category) => category.id === over.id);
+      const newCategories = arrayMove(categories, oldIndex, newIndex).map((category, index) => ({
+        ...category,
+        sort: index,
+      }));
+      setCategories(newCategories);
+
+      try {
+        const batch = writeBatch(db);
+        newCategories.forEach((category) => {
+          const categoryRef = doc(db, `product/${productId}/categories`, category.id);
+          batch.update(categoryRef, { sort: category.sort });
+        });
+        await batch.commit();
+      } catch (error) {
+        console.error("Error updating category sort order in Firestore:", error);
+      }
+    }
+  };
+
   const handleAddCategory = async () => {
     setEditingCategoryId(null);
     setNewCategoryName('');
 
     const id = getRandomId();
     try {
-      await setDoc(doc(db, `product/${productId}/categories`, id), {
+      const newCategory = {
         name: newCategoryName,
         modules: [],
-      });
+        sort: categories.length,
+      };
+      await setDoc(doc(db, `product/${productId}/categories`, id), newCategory);
+      setCategories((prev) => [...prev, { id, ...newCategory }]);
       setNewCategoryName('');
       setIsAddCategoryDialogOpen(false);
-      refreshCategories();
     } catch (error) {
-      console.error('Error adding category: ', error);
+      console.error('Error adding category:', error);
     }
   };
 
   const handleDeleteCategory = async (categoryId: string) => {
     try {
       await deleteDoc(doc(db, `product/${productId}/categories`, categoryId));
-      refreshCategories();
+      const updatedCategories = categories
+        .filter((category) => category.id !== categoryId)
+        .map((category, index) => ({
+          ...category,
+          sort: index,
+        }));
+      setCategories(updatedCategories);
+
+      const batch = writeBatch(db);
+      updatedCategories.forEach((category) => {
+        const categoryRef = doc(db, `product/${productId}/categories`, category.id);
+        batch.update(categoryRef, { sort: category.sort });
+      });
+      await batch.commit();
     } catch (error) {
-      console.error('Error deleting category: ', error);
+      console.error('Error deleting category:', error);
     }
   };
 
@@ -433,7 +503,7 @@ export const ProductModules = ({ productId }: { productId: string }) => {
       setEditingCategoryId(null);
       refreshCategories();
     } catch (error) {
-      console.error('Error renaming category: ', error);
+      console.error('Error renaming category:', error);
     }
   };
 
@@ -442,11 +512,11 @@ export const ProductModules = ({ productId }: { productId: string }) => {
       const categoriesSnapshot = await getDocs(collection(db, `product/${productId}/categories`));
       const categoriesList = categoriesSnapshot.docs.map(doc => {
         const data = doc.data();
-        return { id: doc.id, name: data.name, modules: data.modules || [] };
+        return { id: doc.id, name: data.name, modules: data.modules || [], sort: data.sort || 0 };
       });
-      setCategories(categoriesList);
+      setCategories(categoriesList.sort((a, b) => a.sort - b.sort)); // Ensure categories are sorted by their sort value
     } catch (error) {
-      console.error('Error refreshing categories: ', error);
+      console.error('Error refreshing categories:', error);
     }
   };
 
@@ -480,7 +550,6 @@ export const ProductModules = ({ productId }: { productId: string }) => {
     }
   };
 
-  // Filter modules based on the search query
   const filteredModules = modules.filter((module) =>
     module.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -538,11 +607,11 @@ export const ProductModules = ({ productId }: { productId: string }) => {
                         <NavigationMenuItem>
                           <NavigationMenuTrigger className='text-base font-medium'>{product.name}</NavigationMenuTrigger>
                           <NavigationMenuContent className='divide-y divide-white/10'>
-                              <NavigationMenuLink className='flex flex-row min-w-44 w-fit hover:bg-primary bg-card-foreground border-border text-white text-sm py-2 px-3 cursor-pointer' onClick={() => router.push(`/dashboard/`)}>
+                              <NavigationMenuLink className='flex flex-row min-w-44 w-fit hover:bg-primary bg-card-foreground border-border text-foreground text-sm py-2 px-3 cursor-pointer' onClick={() => router.push(`/dashboard/`)}>
                                 Home
                               </NavigationMenuLink>
                             {products.map((prod) => (
-                              <NavigationMenuLink className='flex flex-row min-w-44 w-fit hover:bg-primary bg-card-foreground border-border text-white text-sm py-2 px-3 cursor-pointer' key={prod.id} onClick={() => router.push(`/dashboard/${prod.id}`)}>
+                              <NavigationMenuLink className='flex flex-row min-w-44 w-fit hover:bg-primary bg-card-foreground border-border text-foreground text-sm py-2 px-3 cursor-pointer' key={prod.id} onClick={() => router.push(`/dashboard/${prod.id}`)}>
                                 {prod.name}
                               </NavigationMenuLink>
                             ))}
@@ -592,81 +661,172 @@ export const ProductModules = ({ productId }: { productId: string }) => {
         <ModuleDialog isOpen={isDialogOpen} onClose={() => setIsDialogOpen(false)} productId={productId} refreshModules={refreshModules} />
         {filteredCategories.length > 0 ? (
           <>
-            {filteredCategories.map((category) => (
-              <div key={category.id} className='mb-8'>
-                <div className='text-white flex items-center gap-4 text-xl font-semibold mb-4'>
-                  {editingCategoryId === category.id ? (
-                    <input
-                      type='text'
-                      value={newCategoryName}
-                      onChange={(e) => setNewCategoryName(e.target.value)}
-                      onKeyDown={(e) => e.stopPropagation()}
-                      onBlur={() => handleRenameCategory(category.id, newCategoryName)}
-                      className='border bg-transparent text-white p-2 rounded'
-                    />
-                  ) : (
-                    <span className='min-w-fit'>{category.name}</span>
-                  )}
-                  <div className='w-full h-[1px] bg-border' />
-                  {isEditMode && (
-                    <>
-                      <Button onClick={() => setEditingCategoryId(category.id)}>
-                        <RiEdit2Line />
-                      </Button>
-                      <Button variant='destructive' onClick={() => handleDeleteCategory(category.id)}>
-                        <RiDeleteBinLine />
-                      </Button>
-                    </>
-                  )}
-                </div>
-                <div className='w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4'>
-                  {category.modules.length > 0 || isEditMode ? (
-                    category.modules.map((moduleId) => {
-                      const module = modules.find((mod) => mod.id === moduleId);
-                      return module ? (
-                        <div
-                          key={module.id}
-                          className={`bg-gray-500/15 p-4 rounded-lg flex flex-col text-center items-center relative ${!isEditMode ? 'cursor-pointer' : ''}`}
-                          onClick={() => !isEditMode && router.push(`/dashboard/${productId}/modules/${module.id}`)}
-                        >
-                          <div className='text-2xl rounded-full mb-2 p-5 bg-gray-500/20' style={{ color: module.settings }}>{getIcon(module.type)}</div>
-                          <div className='text-white text-lg'>{module.name}</div>
-                          <div className='text-neutral-400'>{module.type}</div>
-                          {isEditMode && (
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <Button className='border mt-3'>Verschieben</Button>
-                              </PopoverTrigger>
-                              <PopoverContent>
-                                <div className='flex flex-col gap-2'>
-                                  {categories
-                                    .filter((cat) => cat.id !== category.id)
-                                    .map((cat) => (
-                                      <Button
-                                        key={cat.id}
-                                        onClick={() => handleMoveModule(module.id, category.id, cat.id)}
-                                      >
-                                        {cat.name}
-                                      </Button>
-                                    ))}
-                                  <Button
-                                    onClick={() => handleMoveModule(module.id, category.id, null)}
+            {isEditMode && (
+              <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={categories.map((category) => category.id)} strategy={verticalListSortingStrategy}>
+                  {categories
+                    .sort((a, b) => a.sort - b.sort)
+                    .map((category) => (
+                      <SortableCategory key={category.id} id={category.id}>
+                        {(listeners: any) => (
+                          <div className='mb-8'>
+                            <div className='text-foreground flex items-center gap-4 text-xl font-semibold mb-4'>
+                              <span className='cursor-grab' {...listeners}>
+                                <FaGripVertical />
+                              </span>
+                              {editingCategoryId === category.id ? (
+                                <input
+                                  type='text'
+                                  value={newCategoryName}
+                                  onChange={(e) => setNewCategoryName(e.target.value)}
+                                  onKeyDown={(e) => e.stopPropagation()}
+                                  onBlur={() => handleRenameCategory(category.id, newCategoryName)}
+                                  className='border bg-transparent text-foreground p-2 rounded'
+                                />
+                              ) : (
+                                <span
+                                  className='min-w-fit cursor-pointer'
+                                  onDoubleClick={() => setEditingCategoryId(category.id)}
+                                >
+                                  {category.name}
+                                </span>
+                              )}
+                              <div className='w-full h-[1px] bg-border' />
+                              <Button onClick={() => setEditingCategoryId(category.id)}>
+                                <RiEdit2Line />
+                              </Button>
+                              <Button variant='destructive' onClick={() => handleDeleteCategory(category.id)}>
+                                <RiDeleteBinLine />
+                              </Button>
+                            </div>
+                            <div className='w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4'>
+                              {category.modules.map((moduleId) => {
+                                const module = modules.find((mod) => mod.id === moduleId);
+                                return module ? (
+                                  <div
+                                    key={module.id}
+                                    className={`bg-gray-500/15 p-4 rounded-lg flex flex-col text-center items-center relative ${!isEditMode ? 'cursor-pointer' : ''}`}
+                                    onClick={() => !isEditMode && router.push(`/dashboard/${productId}/modules/${module.id}`)}
                                   >
-                                    Unkategorisiert
-                                  </Button>
-                                </div>
-                              </PopoverContent>
-                            </Popover>
-                          )}
-                        </div>
-                      ) : null;
-                    })
-                  ) : (
-                    isEditMode && <div className='text-neutral-400'>Keine Module</div>
-                  )}
-                </div>
-              </div>
-            ))}
+                                    <div className='text-2xl rounded-full mb-2 p-5 bg-gray-500/20' style={{ color: module.settings }}>{getIcon(module.type)}</div>
+                                    <div className='text-foreground text-lg'>{module.name}</div>
+                                    <div className='text-neutral-400'>{module.type}</div>
+                                    {isEditMode && (
+                                      <Popover>
+                                        <PopoverTrigger asChild>
+                                          <Button className='border mt-3'>Verschieben</Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent>
+                                          <div className='flex flex-col gap-2'>
+                                            {categories
+                                              .filter((cat) => cat.id !== category.id)
+                                              .map((cat) => (
+                                                <Button
+                                                  key={cat.id}
+                                                  onClick={() => handleMoveModule(module.id, category.id, cat.id)}
+                                                >
+                                                  {cat.name}
+                                                </Button>
+                                              ))}
+                                            <Button
+                                              onClick={() => handleMoveModule(module.id, category.id, null)}
+                                            >
+                                              Unkategorisiert
+                                            </Button>
+                                          </div>
+                                        </PopoverContent>
+                                      </Popover>
+                                    )}
+                                  </div>
+                                ) : null;
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </SortableCategory>
+                    ))}
+                </SortableContext>
+              </DndContext>
+            )}
+            {!isEditMode && (
+              <>
+                {filteredCategories.map((category) => (
+                  <div key={category.id} className='mb-8'>
+                    <div className='text-foreground flex items-center gap-4 text-xl font-semibold mb-4'>
+                      {editingCategoryId === category.id ? (
+                        <input
+                          type='text'
+                          value={newCategoryName}
+                          onChange={(e) => setNewCategoryName(e.target.value)}
+                          onKeyDown={(e) => e.stopPropagation()}
+                          onBlur={() => handleRenameCategory(category.id, newCategoryName)}
+                          className='border bg-transparent text-foreground p-2 rounded'
+                        />
+                      ) : (
+                        <span className='min-w-fit'>{category.name}</span>
+                      )}
+                      <div className='w-full h-[1px] bg-border' />
+                      {isEditMode && (
+                        <>
+                          <Button onClick={() => setEditingCategoryId(category.id)}>
+                            <RiEdit2Line />
+                          </Button>
+                          <Button variant='destructive' onClick={() => handleDeleteCategory(category.id)}>
+                            <RiDeleteBinLine />
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                    <div className='w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4'>
+                      {category.modules.length > 0 || isEditMode ? (
+                        category.modules.map((moduleId) => {
+                          const module = modules.find((mod) => mod.id === moduleId);
+                          return module ? (
+                            <div
+                              key={module.id}
+                              className={`bg-gray-500/15 p-4 rounded-lg flex flex-col text-center items-center relative ${!isEditMode ? 'cursor-pointer' : ''}`}
+                              onClick={() => !isEditMode && router.push(`/dashboard/${productId}/modules/${module.id}`)}
+                            >
+                              <div className='text-2xl rounded-full mb-2 p-5 bg-gray-500/20' style={{ color: module.settings }}>{getIcon(module.type)}</div>
+                              <div className='text-foreground text-lg'>{module.name}</div>
+                              <div className='text-neutral-400'>{module.type}</div>
+                              {isEditMode && (
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <Button className='border mt-3'>Verschieben</Button>
+                                  </PopoverTrigger>
+                                  <PopoverContent>
+                                    <div className='flex flex-col gap-2'>
+                                      {categories
+                                        .filter((cat) => cat.id !== category.id)
+                                        .map((cat) => (
+                                          <Button
+                                            key={cat.id}
+                                            onClick={() => handleMoveModule(module.id, category.id, cat.id)}
+                                          >
+                                            {cat.name}
+                                          </Button>
+                                        ))}
+                                      <Button
+                                        onClick={() => handleMoveModule(module.id, category.id, null)}
+                                      >
+                                        Unkategorisiert
+                                      </Button>
+                                    </div>
+                                  </PopoverContent>
+                                </Popover>
+                              )}
+                            </div>
+                          ) : null;
+                        })
+                      ) : (
+                        isEditMode && <div className='text-neutral-400'>Keine Module</div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
             <div className='w-full h-[1px] bg-border' />
           </>
         ) : null}
@@ -680,7 +840,7 @@ export const ProductModules = ({ productId }: { productId: string }) => {
                 onClick={() => !isEditMode && router.push(`/dashboard/${productId}/modules/${module.id}`)}
               >
                 <div className='text-2xl rounded-full mb-2 p-5 bg-gray-500/20' style={{ color: module.settings }}>{getIcon(module.type)}</div>
-                <div className='text-white text-lg'>{module.name}</div>
+                <div className='text-foreground text-lg'>{module.name}</div>
                 <div className='text-neutral-400'>{module.type}</div>
                 {isEditMode && (
                   <Popover>

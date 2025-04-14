@@ -76,10 +76,10 @@ const AddressSelector = ({ onAddressSelect }: { onAddressSelect: (address: strin
         value={searchTerm}
         onChange={handleSearchChange}
         placeholder="Adresse suchen"
-        className='text-white placeholder:text-neutral-400/50'
+        className='text-foreground placeholder:text-neutral-400/50'
       />
       {suggestions && suggestions.length > 0 && (
-        <ul className='text-white z-50 absolute flex flex-col divide-y max-h-64 overflow-scroll bg-card-foreground w-full rounded-md mt-2 border'>
+        <ul className='text-foreground z-50 absolute flex flex-col divide-y max-h-64 overflow-scroll bg-card-foreground w-full rounded-md mt-2 border'>
           {suggestions.map((suggestion) => (
             <li
               key={suggestion.place_id}

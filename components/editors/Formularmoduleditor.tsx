@@ -113,7 +113,7 @@ const RecipientsConfigurator = ({ isOpen, onOpenChange, productId, moduleId, onC
                     <SheetTitle>Email Empfänger</SheetTitle>
                     <SheetDescription>
                         <div className="flex gap-2">
-                            <Input className="text-white placeholder:text-white/40" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="info@example.com" />
+                            <Input className="text-foreground placeholder:text-foreground/40" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="info@example.com" />
                             <Button variant="secondary" onClick={addEmail}>Hinzufügen</Button>
                         </div>
                     </SheetDescription>
@@ -214,7 +214,7 @@ const FieldConfigurator = ({ isOpen, onOpenChange, onSave, fieldData, changesMad
                 </DialogHeader>
                 <div className="flex flex-col gap-4">
                     <Select value={fieldType} onValueChange={(value) => setFieldType(value)}>
-                        <SelectTrigger className="w-full text-white placeholder:text-neutral-400">
+                        <SelectTrigger className="w-full text-foreground placeholder:text-neutral-400">
                             <SelectValue placeholder="Feldart" />
                         </SelectTrigger>
                         <SelectContent>
@@ -225,9 +225,9 @@ const FieldConfigurator = ({ isOpen, onOpenChange, onSave, fieldData, changesMad
                             ))}
                         </SelectContent>
                     </Select>
-                    <Input className="placeholder:text-white/40" value={fieldLabel} onChange={(e) => setFieldLabel(e.target.value)} placeholder="Label" />
+                    <Input className="placeholder:text-foreground/40" value={fieldLabel} onChange={(e) => setFieldLabel(e.target.value)} placeholder="Label" />
                     {fieldType !== 'Checkboxfield' && (
-                        <Input className="placeholder:text-white/40" value={placeholder} onChange={(e) => setPlaceholder(e.target.value)} placeholder="Placeholder" />
+                        <Input className="placeholder:text-foreground/40" value={placeholder} onChange={(e) => setPlaceholder(e.target.value)} placeholder="Placeholder" />
                     )}
                     <div className="flex items-center gap-2">
                         <Switch checked={isRequired} onCheckedChange={(checked) => setIsRequired(checked)} />
@@ -236,7 +236,7 @@ const FieldConfigurator = ({ isOpen, onOpenChange, onSave, fieldData, changesMad
                     {fieldType === 'Dropdownfield' && (
                         <div className="flex flex-col gap-2">
                             <div className="flex gap-2">
-                                <Input className="placeholder:text-white/40" value={newOption} onChange={(e) => setNewOption(e.target.value)} placeholder="Option hinzufügen" />
+                                <Input className="placeholder:text-foreground/40" value={newOption} onChange={(e) => setNewOption(e.target.value)} placeholder="Option hinzufügen" />
                                 <Button variant="secondary" onClick={addOption}>Hinzufügen</Button>
                             </div>
                             <div className="flex flex-col gap-1">
@@ -370,7 +370,7 @@ const FormularmodulEditor = ({ id, productId, onChangesSaved }: { id: string, pr
     return (
         <div className="w-full h-full">
             <div className="w-full flex gap-4 mb-10">
-                <Input placeholder='Suche...' className='text-white placeholder:text-neutral-100/50' />
+                <Input placeholder='Suche...' className='text-foreground placeholder:text-neutral-100/50' />
                 <FieldConfigurator 
                     isOpen={isFieldConfiguratorOpen} 
                     onOpenChange={(isOpen) => {

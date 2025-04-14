@@ -62,12 +62,12 @@ const IconSelector = ({ selectedIcon, onIconSelect }: { selectedIcon: string, on
                     {selectedIcon ? React.createElement(allIcons[selectedIcon as keyof typeof allIcons]) : <allIcons.FaMagnifyingGlass />}
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-64 h-64 bg-muted text-white overflow-y-scroll">
+            <PopoverContent className="w-64 h-64 bg-muted text-foreground overflow-y-scroll">
                 <Input
                     placeholder="Suche icons..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="mb-2 text-white placeholder:text-neutral-200/50"
+                    className="mb-2 text-foreground placeholder:text-neutral-200/50"
                 />
                 <div className="grid grid-cols-4 gap-2">
                     {icons.map(icon => (
@@ -163,7 +163,7 @@ const TilesSheet = React.memo(({ tiles, setTiles, moduleId, productId, onChanges
             </SheetTrigger>
             <SheetContent className="min-w-[700px]">
                 <SheetHeader>
-                    <SheetTitle className='text-white'>Kacheln bearbeiten</SheetTitle>
+                    <SheetTitle className='text-foreground'>Kacheln bearbeiten</SheetTitle>
                     <SheetDescription className='text-neutral-300'>Bearbeiten Sie die Kacheln</SheetDescription>
                 </SheetHeader>
                 <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEndTiles}>
@@ -174,19 +174,19 @@ const TilesSheet = React.memo(({ tiles, setTiles, moduleId, productId, onChanges
                                     <SortableTile key={tile.id} id={tile.id}>
                                         {(listeners: any) => (
                                             <div className='flex gap-2 items-center overflow-y-scroll bg-muted rounded-md border p-2'>
-                                                <span className='handle text-white px-3' {...listeners}><FaGrip /></span>
+                                                <span className='handle text-foreground px-3' {...listeners}><FaGrip /></span>
                                                 <div className='flex-1 flex flex-col gap-2'>
                                                     <Input
                                                         value={tile.title}
                                                         onChange={(e) => handleTitleChange(index, e.target.value)}
                                                         placeholder='Kachel Titel'
-                                                        className='text-white placeholder:text-neutral-200/50'
+                                                        className='text-foreground placeholder:text-neutral-200/50'
                                                     />
                                                     <Input
                                                         value={tile.url}
                                                         onChange={(e) => handleUrlChange(index, e.target.value)}
                                                         placeholder='Kachel URL'
-                                                        className='text-white placeholder:text-neutral-200/50'
+                                                        className='text-foreground placeholder:text-neutral-200/50'
                                                     />
                                                     <div className='flex justify-between'>
                                                         <div className='flex gap-4 items-center'>
@@ -216,7 +216,7 @@ const TilesSheet = React.memo(({ tiles, setTiles, moduleId, productId, onChanges
                                 ))}
                             </div>
                             <div className='flex flex-col mt-auto gap-3'>
-                                <Button variant="outline" className='text-white' onClick={handleAddTile}><span className='text-lg mr-1'>+</span> Neue Kachel</Button>
+                                <Button variant="outline" className='text-foreground' onClick={handleAddTile}><span className='text-lg mr-1'>+</span> Neue Kachel</Button>
                                 <Button variant="secondary" onClick={handleSaveChanges}>Änderungen speichern</Button>
                             </div>
                         </div>
@@ -332,7 +332,7 @@ const TerminalEditor = ({ id, productId, onChangesSaved }: { id: string, product
                     <TabsTrigger value="tiles">Kacheln</TabsTrigger>
                 </TabsList>
                 <TabsContent value="general">
-                    <Card className='h-fit py-5 bg-transparent border-none rounded-none text-white'>
+                    <Card className='h-fit py-5 bg-transparent border-none rounded-none text-foreground'>
                         <h2 className='text-base font-medium mb-4'>Overlay Einstellungen</h2>
                         <div className='flex flex-col gap-4 mb-8'>
                             <Label className='ml-1 text-neutral-500'>Design</Label>
@@ -387,7 +387,7 @@ const TerminalEditor = ({ id, productId, onChangesSaved }: { id: string, product
                     </Card>
                 </TabsContent>
                 <TabsContent value="topbar">
-                    <Card className='h-fit py-5 bg-transparent border-none rounded-none text-white'>
+                    <Card className='h-fit py-5 bg-transparent border-none rounded-none text-foreground'>
                         <h2 className='text-base font-medium mb-4'>Top-Bar Einstellungen</h2>
                         <div className="space-y-4">
                             <ColorInput
@@ -418,7 +418,7 @@ const TerminalEditor = ({ id, productId, onChangesSaved }: { id: string, product
                     </Card>
                 </TabsContent>
                 <TabsContent value="tiles">
-                    <Card className='h-fit py-5 bg-transparent border-none rounded-none text-white'>
+                    <Card className='h-fit py-5 bg-transparent border-none rounded-none text-foreground'>
                         <h2 className='text-base font-medium mb-4'>Kachel Einstellungen</h2>
                         <div>
                             <ColorInput

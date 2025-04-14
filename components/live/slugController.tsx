@@ -10,7 +10,6 @@ import Formularmodul from './formularmodul';
 import Offnungszeiten from './oeffnungszeitenmodul';
 import { Analytics, logEvent } from 'firebase/analytics';
 import Terminalmodul from './terminalmodul';
-import Cookies from 'js-cookie';
 import Kontaktmodul from './kontaktmodul';
 import Beteiligungsmodul from './beteiligung';
 
@@ -103,7 +102,7 @@ const SlugController = ({ slug, moduleId }: { slug: string, moduleId: string }) 
                     {module && module.type === 'Kontakt-Modul' && <Kontaktmodul product={product} module={module} />}
                     {module && module.type === 'Beteiligungs-Modul' && <Beteiligungsmodul product={product} module={module} />}
                     {module && module.type === 'Terminal-Modul' && <Terminalmodul product={product} module={module} />}
-                    {!module && <h1 className='text-white'></h1>}
+                    {!module && <h1 className='text-foreground'></h1>}
                 </>
             )}
         </div>

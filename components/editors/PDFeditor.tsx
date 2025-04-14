@@ -169,7 +169,7 @@ const PDFeditor = ({ id, productId, onChangesSaved }: { id: string, productId: s
     return (
         <div className='flex flex-col w-full h-full relative'>
             <div className='w-full flex gap-4 mb-10'>
-                <Input placeholder='Suche...' className='text-white placeholder:text-neutral-100/50' value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                <Input placeholder='Suche...' className='text-foreground placeholder:text-neutral-100/50' value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                 <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                     <DialogTrigger asChild>
                         <Button variant='secondary'>PDF hochladen</Button>
@@ -183,10 +183,10 @@ const PDFeditor = ({ id, productId, onChangesSaved }: { id: string, productId: s
                         </DialogHeader>
                         <form onSubmit={handleSubmit(onSubmit)}>
                             <Label>Name</Label>
-                            <Input className='text-white placeholder:text-white/60 my-2' placeholder='Name' {...register('name', { required: true })} />
+                            <Input className='text-foreground placeholder:text-foreground/60 my-2' placeholder='Name' {...register('name', { required: true })} />
 
                             <Tabs defaultValue="upload" className="min-w-[full] mt-4">
-                                <TabsList className='bg-primary w-full text-white/70'>
+                                <TabsList className='bg-primary w-full text-foreground/70'>
                                     <TabsTrigger className='w-full' value="upload">File hochladen</TabsTrigger>
                                     <TabsTrigger className='w-full' value="url">URL</TabsTrigger>
                                 </TabsList>
@@ -201,7 +201,7 @@ const PDFeditor = ({ id, productId, onChangesSaved }: { id: string, productId: s
                                     )}
                                 </TabsContent>
                                 <TabsContent value="url">
-                                    <Input className='text-white placeholder:text-white/60 my-2' placeholder="https://example.com/document.pdf" {...register('url')} disabled={!!file} />
+                                    <Input className='text-foreground placeholder:text-foreground/60 my-2' placeholder="https://example.com/document.pdf" {...register('url')} disabled={!!file} />
                                 </TabsContent>
                             </Tabs>
 
@@ -219,7 +219,7 @@ const PDFeditor = ({ id, productId, onChangesSaved }: { id: string, productId: s
                         <SortableItem key={file.id} id={file.id}>
                             {(listeners: any) => (
                                 <div className={`flex my-[4px] gap-2 items-center overflow-y-scroll ${file.markedForDeletion ? 'opacity-30 pointer-events-none' : ''}`}>
-                                    <span className='handle text-white mr-4' {...listeners}><FaGrip /></span>
+                                    <span className='handle text-foreground mr-4' {...listeners}><FaGrip /></span>
                                     <div className='flex-1'>
                                         <input
                                             className='bg-transparent w-full border-none text-neutral-100/80 text-sm'

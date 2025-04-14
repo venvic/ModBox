@@ -147,6 +147,57 @@ export async function POST(req: NextRequest) {
   }
 }
 
+export async function PUT(req: NextRequest) {
+  try {
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const idToken = authHeader.split("Bearer ")[1];
+    if (!idToken) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const decodedToken = await auth.verifyIdToken(idToken);
+    const { uid, projectAccess } = await req.json();
+
+    if (!uid || !projectAccess) {
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+
+    const userRef = firestore.collection('global').doc('users').collection(uid).doc('info');
+    const userDoc = await userRef.get();
+
+    if (!userDoc.exists) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    await userRef.update({
+      projects: projectAccess.includes('all') ? 'all' : projectAccess,
+      updatedAt: new Date().toISOString(),
+      updatedBy: decodedToken.uid,
+    });
+
+    const logDate = new Date().toISOString().split('T')[0];
+    const logRef = firestore.collection('logs').doc(logDate);
+    await logRef.set({
+      date: logDate,
+      logs: FieldValue.arrayUnion({
+        uid: decodedToken.uid,
+        action: 'userUpdateProjects',
+        itemId: uid,
+        timestamp: new Date().toISOString(),
+      }),
+    }, { merge: true });
+
+    return NextResponse.json({ message: "User projects updated successfully" }, { status: 200 });
+  } catch (error) {
+    console.error("Error updating user projects:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
 export async function DELETE(req: NextRequest) {
   try {
     const { uid } = await req.json();

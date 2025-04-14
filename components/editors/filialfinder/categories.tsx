@@ -98,7 +98,7 @@ const CategoriesEditor = ({ categories, setCategories, moduleId, productId, onCh
         </SheetTrigger>
         <SheetContent className="min-w-[90dvw] md:min-w-[500px] flex flex-col">
           <SheetHeader>
-            <SheetTitle className='text-white'>Kategorien bearbeiten</SheetTitle>
+            <SheetTitle className='text-foreground'>Kategorien bearbeiten</SheetTitle>
             <SheetDescription className='text-neutral-300'>Bearbeiten Sie die Kategorien</SheetDescription>
           </SheetHeader>
           <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEndCategories}>
@@ -108,12 +108,12 @@ const CategoriesEditor = ({ categories, setCategories, moduleId, productId, onCh
                   <SortableItem key={category.id} id={category.id}>
                     {(listeners: any) => (
                       <div className='flex gap-2 items-center mt-2'>
-                        <span className='handle text-white' {...listeners}><FaGrip /></span>
+                        <span className='handle text-foreground' {...listeners}><FaGrip /></span>
                         <Input
                           value={category.name}
                           onChange={(e) => handleNameChange(index, e.target.value)}
                           placeholder='Kategorie Name'
-                          className='text-white placeholder:text-neutral-200/50'
+                          className='text-foreground placeholder:text-neutral-200/50'
                         />
                         <Button
                           variant="destructive"
@@ -127,7 +127,7 @@ const CategoriesEditor = ({ categories, setCategories, moduleId, productId, onCh
                 ))}
               </div>
               <div className='flex flex-col gap-3 mt-4'>
-                <Button variant="outline" className='text-white' onClick={handleAddCategory}>
+                <Button variant="outline" className='text-foreground' onClick={handleAddCategory}>
                   <span className='text-lg mr-1'>+</span> Neue Kategorie
                 </Button>
                 <Button variant="secondary" onClick={handleSaveChanges}>Änderungen speichern</Button>

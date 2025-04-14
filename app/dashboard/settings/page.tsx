@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/table"
 import { doc, getDoc, getFirestore } from 'firebase/firestore';
 import { collection, getDocs } from 'firebase/firestore';
+import { ThemeSelector } from '@/components/theme-selector';
 
 
 export default function Page() {
@@ -311,6 +312,31 @@ export default function Page() {
     }
   };
 
+  const handleUpdateUserProjects = async () => {
+    try {
+      const response = await fetch('/api/handleUser', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${await getAuth().currentUser?.getIdToken()}`
+        },
+        body: JSON.stringify({
+          uid: selectedUser?.uid,
+          projectAccess: selectedProjects.length === projects.length ? ['all'] : selectedProjects,
+        })
+      });
+
+      if (response.ok) {
+        toast.success('Projekte erfolgreich aktualisiert');
+        setIsEditModalOpen(false);
+      } else {
+        const errorData = await response.json();
+        toast.error('Fehler beim Aktualisieren der Projekte', { description: errorData.error });
+      }
+    } catch (error) {
+      toast.error('Fehler beim Aktualisieren der Projekte');
+    }
+  };
 
   const displayedLogs = filteredLogs;
   const isSuperAdmin = userId ? superAdmins.includes(userId) : false;
@@ -355,7 +381,7 @@ export default function Page() {
                         setSelectedProjects(selected.map((item) => item.value));
                       }
                     }}
-                    placeholder={projects.length > 0 ? "Projekte auswählen" : "Keine Projekte verfügbar"} // Safeguard for empty data
+                    placeholder={projects.length > 0 ? "Projekte auswählen" : "Keine Projekte verfügbar"}
                   />
                 </div>
                 <div className='flex items-center gap-2 mt-2'>
@@ -433,6 +459,30 @@ export default function Page() {
                 <DialogDescription>Bearbeiten Sie die Optionen für den Nutzer {selectedUser?.email}.</DialogDescription>
               </DialogHeader>
               <div className="flex flex-col gap-4">
+                <div>
+                  <label className='block text-sm font-medium'>Projekte</label>
+                  <MultipleSelector
+                    value={projects
+                      ?.filter((project) => selectedProjects.includes(project.id))
+                      .map((project) => ({ value: project.id, label: project.name }))}
+                    options={[
+                      { value: 'all', label: 'Alle auswählen' },
+                      ...projects.map((project) => ({
+                        value: project.id,
+                        label: project.name,
+                      })),
+                    ]}
+                    onChange={(selected) => {
+                      if (selected.some((item) => item.value === 'all')) {
+                        handleSelectAllProjects();
+                      } else {
+                        setSelectedProjects(selected.map((item) => item.value));
+                      }
+                    }}
+                    placeholder={projects.length > 0 ? "Projekte auswählen" : "Keine Projekte verfügbar"}
+                  />
+                </div>
+                <Button onClick={handleUpdateUserProjects}>Projekte aktualisieren</Button>
                 <Button variant="outline" onClick={handleResetPassword}>Passwort zurücksetzen</Button>
                 <Button onClick={handleDeactivateUser}>Nutzer deaktivieren</Button>
                 <Button variant="destructive" onClick={handleDeleteUser}>Nutzer löschen</Button>

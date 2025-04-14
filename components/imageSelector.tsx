@@ -74,7 +74,7 @@ const ImageSelector = ({ moduleId, onImageSelect }: { moduleId: string, onImageS
                                         onClick={() => setSelectedImage(image)}
                                     />
                                     <button
-                                        className="absolute top-1 right-5 border border-red-500 bg-red-600/80 text-white rounded-full w-5 h-5 flex items-center justify-center"
+                                        className="absolute top-1 right-5 border border-red-500 bg-red-600/80 text-foreground rounded-full w-5 h-5 flex items-center justify-center"
                                         onClick={() => handleDelete(image)}
                                     >
                                         <FaX className='h-[10px] w-[10px]'/>

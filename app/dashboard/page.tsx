@@ -111,8 +111,8 @@ const AddProductDialog = ({ isOpen, onClose, onProductAdded }: { isOpen: boolean
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
-        <DialogTitle className='text-white'>Gemeinde hinzufügen</DialogTitle>
-        <DialogDescription className='text-neutral-300'>
+        <DialogTitle className='text-foreground'>Gemeinde hinzufügen</DialogTitle>
+        <DialogDescription className='text-foreground/70'>
           Bitte geben Sie die folgenden Informationen ein:
         </DialogDescription>
         <Input
@@ -120,14 +120,14 @@ const AddProductDialog = ({ isOpen, onClose, onProductAdded }: { isOpen: boolean
           placeholder='Name'
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className='w-full text-white placeholder:text-neutral-400'
+          className='w-full text-foreground placeholder:text-neutral-400'
         />
         <Input
           type='text'
           placeholder='Slug'
           value={slug}
           onChange={handleSlugChange}
-          className='w-full text-white placeholder:text-neutral-400'
+          className='w-full text-foreground placeholder:text-neutral-400'
         />
         <DialogFooter className='mt-8'>
           <Button onClick={onClose}>Abbrechen</Button>
@@ -246,7 +246,7 @@ export default function Page() {
             placeholder='Suche...'
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className='w-full text-white placeholder:text-neutral-500'
+            className='w-full text-foreground placeholder:text-neutral-500'
           />
           {grantedProducts === "all" && (
             <Button variant='secondary' onClick={() => setIsDialogOpen(true)}>Hinzufügen</Button>
@@ -258,7 +258,7 @@ export default function Page() {
         {!isDialogOpen &&
         <>
           <div className='w-full border h-fit min-h-[560px] mt-10 relative overflow-y-scroll rounded-lg'>
-            <table className='min-w-full bg-background text-white'>
+            <table className='min-w-full bg-background text-foreground'>
               <thead>
                 <tr>
                   <th className='py-2 px-4 border-b text-left'>Name</th>

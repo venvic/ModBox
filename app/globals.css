@@ -2,8 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-
-
 @layer base {
   :root {
     --background: 235 36% 5%;
@@ -33,6 +31,70 @@
 
     --radius: 0.5rem;
 
+    --sidebar-background: 235 36% 7%;
+    --sidebar-foreground: 235 14% 95.9%;
+    --sidebar-primary: 235 4% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 235 4% 15.9%;
+    --sidebar-accent-foreground: 235 4% 95.9%;
+    --sidebar-border:235 10% 15.9%;
+    --sidebar-ring: 235 17% 59.8%;
+  }
+
+  [data-theme="cosmema"] {
+    --background: 203 44% 3%;
+    --foreground: 203 23% 100%;
+    --muted: 23 10% 9%;
+    --muted-foreground: 23 11% 66%;
+    --popover: 203 44% 3%;
+    --popover-foreground: 203 23% 100%;
+    --card: 203 44% 3%;
+    --card-foreground: 203 23% 100%;
+    --border: 203 3% 14%;
+    --input: 203 3% 14%;
+    --primary: 203 18% 56%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 23 18% 56%;
+    --secondary-foreground: 0 0% 0%;
+    --accent: 23 18% 56%;
+    --accent-foreground: 0 0% 0%;
+    --destructive: 15 90% 46%;
+    --destructive-foreground: 0 0% 100%;
+    --ring: 203 18% 56%;
+    --chart-1: 203 18% 56%;
+    --chart-2: 23 18% 56%;
+    --chart-3: 23 18% 56%;
+    --chart-4: 23 18% 59%;
+    --chart-5: 203 21% 56%;
+    --radius: 0.5rem;
+
+    --sidebar-background: 203 44% 3%;
+    --sidebar-foreground:  203 23% 100%;
+    --sidebar-primary: 30 70% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 30 60% 50%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 30 20% 80%;
+    --sidebar-ring: 30 50% 60%;
+  }
+
+  [data-theme="minimal"] {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 0%;
+    --primary: 0 0% 0%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 70%;
+    --secondary-foreground: 0 0% 30%;
+    --accent: 0 0% 90%;
+    --accent-foreground: 0 0% 10%;
+    --muted: 0 0% 95%;
+    --muted-foreground: 0 0% 50%;
+    --border: 0 0% 90%;
+    --ring: 0 0% 80%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 0%;
+    --input: 0 0% 90%;
+    --radius: 0.25rem;
 
     --sidebar-background: 235 36% 7%;
     --sidebar-foreground: 235 14% 95.9%;
@@ -44,8 +106,6 @@
     --sidebar-ring: 235 17% 59.8%;
   }
 }
-
-
 
 @layer base {
   * {
@@ -69,7 +129,6 @@
     --chart-5: 340 75% 55%;
   }
 }
-
 
 .custom-pointers .react-colorful__saturation-pointer {
   width: 14px;

@@ -100,21 +100,21 @@ const Offnungszeiten: React.FC<OffnungszeitenProps> = ({ product, module }) => {
                     <div className={`w-full flex flex-col justify-center items-center gap-2 rounded-t-md border border-b-gray-700/10 py-6 px-4 ${isCurrentlyOpen(times) ? 'bg-green-500/80 border-green-600/70' : 'bg-red-500/80 border-red-600/70'}`}>
                         {isCurrentlyOpen(times) ? 
                             <div className="relative">
-                                <TbClockCheck className="text-white h-8 w-8" />
+                                <TbClockCheck className="text-foreground h-8 w-8" />
                             </div>
                         : 
                             <div className="relative">
-                                <TbClockX className="text-white h-8 w-8" />
+                                <TbClockX className="text-foreground h-8 w-8" />
                             </div>
                         }
-                        <p className="text-white text-sm font-semibold">{isCurrentlyOpen(times) ? 'Aktuell geöffnet' : 'Aktuell geschlossen'}</p>
+                        <p className="text-foreground text-sm font-semibold">{isCurrentlyOpen(times) ? 'Aktuell geöffnet' : 'Aktuell geschlossen'}</p>
                     </div>
                     <div className="border-t-0 rounded-t-none flex flex-col w-full border border-gray-700/10 rounded-md divide-y divide-gray-700/10">
                         {times.map(time => (
                             <div key={time.name} id={time.name} className={`flex flex-col py-3 px-4 ${time.sort === new Date().getDay() ? 'bg-gray-200/30' : ''}`}>
                                 <h2 className="font-medium text-sm flex w-full justify-between">
                                     {time.name} 
-                                    {time.sort === new Date().getDay() && <p className="py-1 px-3 text-xs bg-black rounded-full text-white">Heute</p>}
+                                    {time.sort === new Date().getDay() && <p className="py-1 px-3 text-xs bg-black rounded-full text-foreground">Heute</p>}
                                 </h2>
 
                                 {!time.closed ? (

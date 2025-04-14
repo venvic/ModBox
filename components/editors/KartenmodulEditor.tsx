@@ -145,7 +145,7 @@ const KartenmodulEditor = ({ id, productId, onChangesSaved }: { id: string, prod
   return (
     <div className='flex flex-col w-full h-full relative'>
       <div className='w-full gap-4 flex mb-10'>
-        <Input placeholder='Suche...' className='text-white placeholder:text-white/40' value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+        <Input placeholder='Suche...' className='text-foreground placeholder:text-foreground/40' value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
         <Button variant="secondary" onClick={() => { setIsSheetOpen(true); setLat(''); setLon(''); setColor(''); setName(''); setWebsite('') }}>Ort hinzufügen</Button>
       </div>
       <div className='flex flex-col divide-y divide-white/10 max-h-[777px] overflow-y-scroll'>
@@ -172,15 +172,15 @@ const KartenmodulEditor = ({ id, productId, onChangesSaved }: { id: string, prod
               <Button variant="secondary" onClick={() => setIsMapDialogOpen(true)}>Ort wählen</Button>
             </div>
             <div className='flex gap-4 items-center'>
-              <Input className='text-white placeholder:text-white/40' placeholder='Latitude' value={lat} onChange={(e) => setLat(e.target.value)} />
-              <Input className='text-white placeholder:text-white/40' placeholder='Longitude' value={lon} onChange={(e) => setLon(e.target.value)} />
+              <Input className='text-foreground placeholder:text-foreground/40' placeholder='Latitude' value={lat} onChange={(e) => setLat(e.target.value)} />
+              <Input className='text-foreground placeholder:text-foreground/40' placeholder='Longitude' value={lon} onChange={(e) => setLon(e.target.value)} />
             </div>
             <div className='flex flex-col gap-2'>
               <HexColorPicker color={color} onChange={setColor} className="custom-pointers"/>
-              <Input className='text-white placeholder:text-white/40' placeholder='Farbe' value={color} onChange={(e) => setColor(e.target.value)} />
+              <Input className='text-foreground placeholder:text-foreground/40' placeholder='Farbe' value={color} onChange={(e) => setColor(e.target.value)} />
             </div>
-            <Input className='text-white placeholder:text-white/40' placeholder='Name' value={name} onChange={(e) => setName(e.target.value)} />
-            <Input className='text-white placeholder:text-white/40' placeholder='Website' value={website} onChange={(e) => setWebsite(e.target.value)} />
+            <Input className='text-foreground placeholder:text-foreground/40' placeholder='Name' value={name} onChange={(e) => setName(e.target.value)} />
+            <Input className='text-foreground placeholder:text-foreground/40' placeholder='Website' value={website} onChange={(e) => setWebsite(e.target.value)} />
             <Button className='mt-10' onClick={handleSave}>{editingMark ? 'Aktualisieren' : 'Speichern'}</Button>
           </div>
         </SheetContent>
@@ -188,7 +188,7 @@ const KartenmodulEditor = ({ id, productId, onChangesSaved }: { id: string, prod
 
       <Dialog open={isMapDialogOpen} onOpenChange={setIsMapDialogOpen}>
         <DialogContent>
-          <DialogTitle className='text-white'>Position auswählen</DialogTitle>
+          <DialogTitle className='text-foreground'>Position auswählen</DialogTitle>
           <div className='w-full h-96'>
             {center.latitude !== 0 && center.longitude !== 0 ? (
               <Map
@@ -212,7 +212,7 @@ const KartenmodulEditor = ({ id, productId, onChangesSaved }: { id: string, prod
                 {selectedLocation && <Marker color='#0FA7AF' latitude={selectedLocation.latitude} longitude={selectedLocation.longitude} />}
               </Map>
             ) : (
-              <p className="text-white">Karte wird geladen...</p>
+              <p className="text-foreground">Karte wird geladen...</p>
             )}
           </div>
           <DialogFooter className='mt-4'>

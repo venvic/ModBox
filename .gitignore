@@ -16,6 +16,7 @@
 # next.js
 /.next/
 /out/
+next.config.ts
 
 # production
 /build
@@ -25,6 +26,9 @@
 *.pem
 /.vscode/
 metadata.ts
+postcss.config.mjs
+tailwind.config.ts
+tsconfig.json
 
 # debug
 npm-debug.log*

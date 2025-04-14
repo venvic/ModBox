@@ -93,7 +93,7 @@ const TileComponent = ({ tile, tileColor, tileBlur, tilePadding }: { tile: Tile,
       onClick={handleClick}
     >
       {tile.icon && React.createElement(allIcons[tile.icon as keyof typeof allIcons], { size: 48 })}
-      <span className="mt-2 text-white">{tile.title}</span>
+      <span className="mt-2 text-foreground">{tile.title}</span>
     </div>
   )
 }
