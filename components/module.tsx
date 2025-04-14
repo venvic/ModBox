@@ -490,7 +490,7 @@ export const ProductModules = ({ productId }: { productId: string }) => {
     modules: category.modules.filter((moduleId) =>
       modules.find((mod) => mod.id === moduleId)?.name.toLowerCase().includes(searchQuery.toLowerCase())
     ),
-  })).filter((category) => category.modules.length > 0);
+  }));
 
   if (loading) {
     return (
@@ -605,7 +605,7 @@ export const ProductModules = ({ productId }: { productId: string }) => {
                       className='border bg-transparent text-white p-2 rounded'
                     />
                   ) : (
-                    <span>{category.name}</span>
+                    <span className='min-w-fit'>{category.name}</span>
                   )}
                   <div className='w-full h-[1px] bg-border' />
                   {isEditMode && (
@@ -620,46 +620,50 @@ export const ProductModules = ({ productId }: { productId: string }) => {
                   )}
                 </div>
                 <div className='w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4'>
-                  {category.modules.map((moduleId) => {
-                    const module = modules.find((mod) => mod.id === moduleId);
-                    return module ? (
-                      <div
-                        key={module.id}
-                        className={`bg-gray-500/15 p-4 rounded-lg flex flex-col text-center items-center relative ${!isEditMode ? 'cursor-pointer' : ''}`}
-                        onClick={() => !isEditMode && router.push(`/dashboard/${productId}/modules/${module.id}`)}
-                      >
-                        <div className='text-2xl rounded-full mb-2 p-5 bg-gray-500/20' style={{ color: module.settings }}>{getIcon(module.type)}</div>
-                        <div className='text-white text-lg'>{module.name}</div>
-                        <div className='text-neutral-400'>{module.type}</div>
-                        {isEditMode && (
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <Button className='border mt-3'>Verschieben</Button>
-                            </PopoverTrigger>
-                            <PopoverContent>
-                              <div className='flex flex-col gap-2'>
-                                {categories
-                                  .filter((cat) => cat.id !== category.id)
-                                  .map((cat) => (
-                                    <Button
-                                      key={cat.id}
-                                      onClick={() => handleMoveModule(module.id, category.id, cat.id)}
-                                    >
-                                      {cat.name}
-                                    </Button>
-                                  ))}
-                                <Button
-                                  onClick={() => handleMoveModule(module.id, category.id, null)}
-                                >
-                                  Unkategorisiert
-                                </Button>
-                              </div>
-                            </PopoverContent>
-                          </Popover>
-                        )}
-                      </div>
-                    ) : null;
-                  })}
+                  {category.modules.length > 0 || isEditMode ? (
+                    category.modules.map((moduleId) => {
+                      const module = modules.find((mod) => mod.id === moduleId);
+                      return module ? (
+                        <div
+                          key={module.id}
+                          className={`bg-gray-500/15 p-4 rounded-lg flex flex-col text-center items-center relative ${!isEditMode ? 'cursor-pointer' : ''}`}
+                          onClick={() => !isEditMode && router.push(`/dashboard/${productId}/modules/${module.id}`)}
+                        >
+                          <div className='text-2xl rounded-full mb-2 p-5 bg-gray-500/20' style={{ color: module.settings }}>{getIcon(module.type)}</div>
+                          <div className='text-white text-lg'>{module.name}</div>
+                          <div className='text-neutral-400'>{module.type}</div>
+                          {isEditMode && (
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button className='border mt-3'>Verschieben</Button>
+                              </PopoverTrigger>
+                              <PopoverContent>
+                                <div className='flex flex-col gap-2'>
+                                  {categories
+                                    .filter((cat) => cat.id !== category.id)
+                                    .map((cat) => (
+                                      <Button
+                                        key={cat.id}
+                                        onClick={() => handleMoveModule(module.id, category.id, cat.id)}
+                                      >
+                                        {cat.name}
+                                      </Button>
+                                    ))}
+                                  <Button
+                                    onClick={() => handleMoveModule(module.id, category.id, null)}
+                                  >
+                                    Unkategorisiert
+                                  </Button>
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                          )}
+                        </div>
+                      ) : null;
+                    })
+                  ) : (
+                    isEditMode && <div className='text-neutral-400'>Keine Module</div>
+                  )}
                 </div>
               </div>
             ))}
