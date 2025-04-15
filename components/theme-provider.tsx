@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
-type ThemeOption = "cosmema" | "modern" | "minimal";
+type ThemeOption = "cosmema" | "modern" | "minimal" | "brain-rot";
 const LAST_USED_THEME_KEY = "last_used_theme";
+
+const ThemeContext = createContext<ThemeOption | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<ThemeOption>("modern");
@@ -24,5 +26,17 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     applyTheme(storedTheme);
   }, []);
 
-  return <>{children}</>;
+  return (
+    <ThemeContext.Provider value={theme}>
+      {children}
+    </ThemeContext.Provider>
+  );
+}
+
+export function useCurrentTheme(): ThemeOption {
+  const theme = useContext(ThemeContext);
+  if (theme === undefined) {
+    throw new Error("useCurrentTheme must be used within a ThemeProvider");
+  }
+  return theme;
 }

@@ -49,42 +49,69 @@ interface TerminalProps {
 
 const TileComponent = ({ tile, tileColor, tileBlur, tilePadding }: { tile: Tile, tileColor: string, tileBlur: number, tilePadding: number }) => {
   const handleClick = () => {
-    if (tile.isIframe) {
-      const iframe = document.createElement('iframe')
-      iframe.src = tile.url
-      iframe.style.position = 'fixed'
-      iframe.style.top = '0'
-      iframe.style.left = '0'
-      iframe.style.width = '100%'
-      iframe.style.height = '100%'
-      iframe.style.zIndex = '9999'
-      iframe.style.border = 'none'
-      iframe.style.backgroundColor = 'white'
-      document.body.appendChild(iframe)
-
-      const closeButton = document.createElement('button')
-      closeButton.innerText = 'x'
-      closeButton.style.position = 'fixed'
-      closeButton.style.backgroundColor = '#FFFFFF'
-      closeButton.style.color = '#0000004F'
-      closeButton.style.border = '1px solid #0000004F'
-      closeButton.style.borderRadius = '50%'
-      closeButton.style.paddingRight = '9px'
-      closeButton.style.paddingLeft = '9px'
-      closeButton.style.paddingBottom = '3px'
-      closeButton.style.paddingTop = '0px'
-      closeButton.style.top = '10px'
-      closeButton.style.right = '10px'
-      closeButton.style.zIndex = '10000'
-      closeButton.onclick = () => {
-        document.body.removeChild(iframe)
-        document.body.removeChild(closeButton)
-      }
-      document.body.appendChild(closeButton)
-    } else {
-      window.open(tile.url, '_blank')
+    if (!tile.isIframe) {
+      console.warn("Blocked attempt to open an external link:", tile.url);
+      alert("Opening external links is not allowed.");
+      return;
     }
-  }
+
+    // Embed content in an iframe for iframe-enabled tiles
+    const iframe = document.createElement('iframe');
+    iframe.src = tile.url;
+    iframe.style.position = 'fixed';
+    iframe.style.top = '0';
+    iframe.style.left = '0';
+    iframe.style.width = '100%';
+    iframe.style.height = '100%';
+    iframe.style.zIndex = '9999';
+    iframe.style.border = 'none';
+    iframe.style.backgroundColor = 'white';
+    document.body.appendChild(iframe);
+
+    // Inject script into the iframe to modify <a> tags
+    iframe.onload = () => {
+      const iframeDocument = iframe.contentDocument || iframe.contentWindow?.document;
+      if (iframeDocument) {
+        const script = iframeDocument.createElement('script');
+        script.textContent = `
+          document.querySelectorAll('a').forEach(anchor => {
+            if (anchor.target === '_blank') {
+              anchor.target = '_self';
+            }
+          });
+
+          document.addEventListener('click', function(event) {
+            const target = event.target.closest('a');
+            if (target && target.target === '_self') {
+              event.preventDefault();
+              window.location.href = target.href;
+            }
+          });
+        `;
+        iframeDocument.head.appendChild(script);
+      }
+    };
+
+    const closeButton = document.createElement('button');
+    closeButton.innerText = 'x';
+    closeButton.style.position = 'fixed';
+    closeButton.style.backgroundColor = '#FFFFFF';
+    closeButton.style.color = '#0000004F';
+    closeButton.style.border = '1px solid #0000004F';
+    closeButton.style.borderRadius = '50%';
+    closeButton.style.paddingRight = '9px';
+    closeButton.style.paddingLeft = '9px';
+    closeButton.style.paddingBottom = '3px';
+    closeButton.style.paddingTop = '0px';
+    closeButton.style.top = '10px';
+    closeButton.style.right = '10px';
+    closeButton.style.zIndex = '10000';
+    closeButton.onclick = () => {
+      document.body.removeChild(iframe);
+      document.body.removeChild(closeButton);
+    };
+    document.body.appendChild(closeButton);
+  };
 
   return (
     <div
@@ -95,8 +122,8 @@ const TileComponent = ({ tile, tileColor, tileBlur, tilePadding }: { tile: Tile,
       {tile.icon && React.createElement(allIcons[tile.icon as keyof typeof allIcons], { size: 48 })}
       <span className="mt-2 text-foreground">{tile.title}</span>
     </div>
-  )
-}
+  );
+};
 
 const TerminalModule: React.FC<TerminalProps> = ({ product, module }) => {
   const [settings, setSettings] = useState<Settings | null>(null)

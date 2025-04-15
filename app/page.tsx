@@ -11,6 +11,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { useCurrentTheme } from "@/components/theme-provider";
 
 export default function Home() {
   const { register, handleSubmit, formState: { errors } } = useForm();
@@ -86,6 +87,7 @@ export default function Home() {
   };
 
   const title = "ModBox";
+  const theme = useCurrentTheme();
 
   return (
     <div className="relative flex flex-col h-screen justify-between items-center w-full py-14 bg-background text-neutral-100 font-[family-name:var(--font-geist-sans)] overflow-hidden">
@@ -109,7 +111,7 @@ export default function Home() {
           {title.split("").map((letter, index) => (
             <motion.span
               key={index}
-              className="text-5xl font-semibold"
+              className={`text-5xl font-semibold ${theme === "minimal" ? "text-black" : "text-neutral-200"}`}
               custom={index}
               initial="hidden"
               animate="visible"
@@ -119,9 +121,9 @@ export default function Home() {
             </motion.span>
           ))}
         </div>
-        <p className="mb-6 text-neutral-200/80">All in one module solution</p>
+        <p className="mb-6 text-foreground/50">All in one module solution</p>
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col w-full max-w-[560px] z-50">
-          <Label className="mt-6 mb-2" htmlFor="email">Email</Label>
+          <Label className="mt-6 mb-2 text-foreground" htmlFor="email">Email</Label>
           <Input
             placeholder="Email"
             type="email"
@@ -130,7 +132,7 @@ export default function Home() {
           />
           {errors.email && <p className="text-red-500/70 text-xs mt-1">{String(errors.email.message)}</p>}
           
-          <Label className="mt-6 mb-2" htmlFor="password">Passwort</Label>
+          <Label className="mt-6 mb-2 text-foreground" htmlFor="password">Passwort</Label>
           <Input
             placeholder="Passwort"
             type="password"
@@ -144,7 +146,7 @@ export default function Home() {
       </main>
       <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
         <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
+          className="flex items-center gap-2 text-foreground hover:underline hover:underline-offset-4"
           href="https://github.com/akos-one/modbox"
           target="_blank"
           rel="noopener noreferrer"
@@ -159,7 +161,7 @@ export default function Home() {
           Dokumentation
         </a>
         <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
+          className="flex items-center gap-2 text-foreground hover:underline hover:underline-offset-4"
           href="https://heimatinfo-application-web-administration.azurewebsites.net/login"
           target="_blank"
           rel="noopener noreferrer"

@@ -13,6 +13,7 @@ import { firebaseConfig } from '@/database';
 import { toast } from 'sonner';
 import Statistics from '@/components/statisticsMonitor';
 import getRandomId from '@/utils/getRandomId';
+import { useCurrentTheme } from '@/components/theme-provider';
 
 if (!getApps().length) {
   initializeApp(firebaseConfig);
@@ -150,6 +151,7 @@ export default function Page() {
   const [grantedProducts, setGrantedProducts] = useState<string[] | "all">([]);
   const [isProductsLoaded, setIsProductsLoaded] = useState(false);
   const router = useRouter();
+  const theme = useCurrentTheme();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -238,7 +240,7 @@ export default function Page() {
   }
 
   return (
-    <div className='bg-background min-h-screen w-screen flex justify-center'>
+    <div className={`min-h-screen w-screen flex justify-center ${theme === "brain-rot" && "bg-[url('/fun/tralalelo.png')] bg-cover bg-center "} ${theme === "modern" ? "bg-gradient-to-br from-blue-950/50 via-purple-900/25 to-blue-900/35" : "bg-background"}`}>
       <div className='max-w-[1900px] w-full p-4 md:p-12'>
         <div className='w-full flex gap-10'>
           <Input
@@ -246,7 +248,7 @@ export default function Page() {
             placeholder='Suche...'
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className='w-full text-foreground placeholder:text-neutral-500'
+            className='w-full text-foreground placeholder:text-foreground/60 bg-background/60 backdrop-blur-xl'
           />
           {grantedProducts === "all" && (
             <Button variant='secondary' onClick={() => setIsDialogOpen(true)}>Hinzufügen</Button>
@@ -258,7 +260,7 @@ export default function Page() {
         {!isDialogOpen &&
         <>
           <div className='w-full border h-fit min-h-[560px] mt-10 relative overflow-y-scroll rounded-lg'>
-            <table className='min-w-full bg-background text-foreground'>
+            <table className='min-w-full bg-background/60 backdrop-blur-xl text-foreground'>
               <thead>
                 <tr>
                   <th className='py-2 px-4 border-b text-left'>Name</th>

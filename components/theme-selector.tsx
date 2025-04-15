@@ -4,9 +4,11 @@ import { useState, useEffect, useCallback } from "react"
 import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Check } from "lucide-react"
+import { getAuth } from "firebase/auth"
 
-type ThemeOption = "cosmema" | "modern" | "minimal"
+type ThemeOption = "cosmema" | "modern" | "minimal" | "brain-rot"
 const LAST_USED_THEME_KEY = "last_used_theme"
+const ALLOWED_UIDS = ["WermfDVKf4eyl8TXR1wGmOlFZsA2", "zYulj2FQOfVebqKhLMmX3LfYM193"]
 
 function ThemePreview({ theme }: { theme: ThemeOption }) {
   switch (theme) {
@@ -60,12 +62,19 @@ function ThemePreview({ theme }: { theme: ThemeOption }) {
           </div>
         </div>
       )
+    case "brain-rot":
+      return (
+        <div className="w-full h-full aspect-video rounded-sm flex items-center justify-center bg-gray-800">
+          <img src="/fun/preview.png" alt="Brain Rot Preview" className="object-cover w-full h-full" />
+        </div>
+      )
   }
 }
 
 export function ThemeSelector() {
   const [selectedTheme, setSelectedTheme] = useState<ThemeOption>("modern")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [userUID, setUserUID] = useState<string | null>(null)
 
   const getLastUsedTheme = (): ThemeOption => {
     const storedTheme = localStorage.getItem(LAST_USED_THEME_KEY)
@@ -80,6 +89,10 @@ export function ThemeSelector() {
   useEffect(() => {
     const storedTheme = getLastUsedTheme()
     setSelectedTheme(storedTheme)
+    const auth = getAuth();
+    const user = auth.currentUser;
+    const uid = user?.uid;
+    setUserUID(uid ?? null)
   }, [])
 
   const handleDialogOpenChange = (open: boolean) => {
@@ -99,6 +112,11 @@ export function ThemeSelector() {
     setIsDialogOpen(false)
   }, [selectedTheme])
 
+  const availableThemes: ThemeOption[] = ["cosmema", "modern", "minimal"]
+  if (userUID && ALLOWED_UIDS.includes(userUID)) {
+    availableThemes.push("brain-rot")
+  }
+
   return (
     <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
       <DialogTrigger asChild>
@@ -110,7 +128,7 @@ export function ThemeSelector() {
         <DialogTitle>Darstellung wählen</DialogTitle>
         <div className="py-4">
           <div className="grid grid-cols-3 gap-4">
-            {(["cosmema", "modern", "minimal"] as ThemeOption[]).map((theme) => (
+            {availableThemes.map((theme) => (
               <div
                 key={theme}
                 onClick={() => handleThemeSelect(theme)}
@@ -124,7 +142,7 @@ export function ThemeSelector() {
                   <ThemePreview theme={theme} />
                 </div>
                 <div className="p-2 bg-background border-t">
-                  <p className="text-sm font-medium capitalize">{theme}</p>
+                  <p className="text-sm font-medium capitalize">{theme === "brain-rot" ? "Brain Rot" : theme}</p>
                 </div>
                 {selectedTheme === theme && (
                   <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full p-0.5">

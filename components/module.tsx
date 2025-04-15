@@ -23,6 +23,7 @@ import { DndContext, closestCenter } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { useCurrentTheme } from './theme-provider';
 
 if (!getApps().length) {
   initializeApp(firebaseConfig);
@@ -327,6 +328,7 @@ export const ProductModules = ({ productId }: { productId: string }) => {
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const theme = useCurrentTheme();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -593,7 +595,7 @@ export const ProductModules = ({ productId }: { productId: string }) => {
   };
 
   return (
-    <div className='bg-background min-h-screen w-screen flex justify-center'>
+    <div className={`min-h-screen w-screen flex justify-center ${theme === "brain-rot" && "bg-[url('/fun/bombardino.png')] bg-cover bg-center"} ${theme === "modern" ? "bg-gradient-to-br from-blue-950/50 via-purple-900/25 to-blue-900/35" : "bg-background"}`}>
       <div className='max-w-[1900px] w-full p-4 md:p-12'>
         {product && (
           <>
@@ -626,7 +628,7 @@ export const ProductModules = ({ productId }: { productId: string }) => {
                     placeholder='Suchen...'
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className='w-full'
+                    className='w-full bg-background/60 backdrop-blur-xl'
                   />
                 </div>
 
@@ -836,10 +838,10 @@ export const ProductModules = ({ productId }: { productId: string }) => {
             .map((module) => (
               <div
                 key={module.id}
-                className={`bg-gray-500/15 p-4 rounded-lg flex flex-col text-center items-center relative ${!isEditMode ? 'cursor-pointer' : ''}`}
+                className={`p-4 rounded-lg flex flex-col text-center items-center relative ${theme === "brain-rot" && "backdrop-blur-sm bg-black/30"} ${theme === "modern" ? "bg-violet-500/10 border border-white/5" : "bg-gray-500/15" } ${!isEditMode ? 'cursor-pointer' : ''}`}
                 onClick={() => !isEditMode && router.push(`/dashboard/${productId}/modules/${module.id}`)}
               >
-                <div className='text-2xl rounded-full mb-2 p-5 bg-gray-500/20' style={{ color: module.settings }}>{getIcon(module.type)}</div>
+                <div className={`text-2xl rounded-full mb-2 p-5 ${theme === "modern" ? "bg-white/5 border border-white/5" : "bg-gray-500/20" }`} style={{ color: module.settings }}>{getIcon(module.type)}</div>
                 <div className='text-foreground text-lg'>{module.name}</div>
                 <div className='text-neutral-400'>{module.type}</div>
                 {isEditMode && (
