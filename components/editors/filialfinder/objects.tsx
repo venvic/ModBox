@@ -173,14 +173,12 @@ const ObjectsEditor = ({ moduleId, productId, categories, onChangesSaved, filter
       if (editingObjectId) {
         const existingObject = objects.find(obj => obj.id === editingObjectId);
         if (existingObject && existingObject.category !== category) {
-          // Delete old object if category has changed
           const oldObjectRef = doc(db, `product/${productId}/modules/${moduleId}/categories/${existingObject.category}/objects`, editingObjectId);
           batch.delete(oldObjectRef);
         }
         const productRef = doc(db, `product/${productId}/modules/${moduleId}/categories/${category}/objects`, editingObjectId);
         batch.set(productRef, newProduct);
       } else {
-        // Create new object
         const productRef = doc(db, `product/${productId}/modules/${moduleId}/categories/${category}/objects`, objectId);
         batch.set(productRef, newProduct);
       }
@@ -195,8 +193,8 @@ const ObjectsEditor = ({ moduleId, productId, categories, onChangesSaved, filter
       setEditingObjectId(null);
       setSelectedImageFile(null);
       toast.success("Produkt gespeichert", { description: `${new Date().toLocaleTimeString()}` });
-      fetchObjects(); // Refetch objects after saving
-      onChangesSaved(); // Call onChangesSaved after saving
+      fetchObjects();
+      onChangesSaved();
     };
   
     const handleRemoveSelectedImage = () => {
@@ -219,12 +217,20 @@ const ObjectsEditor = ({ moduleId, productId, categories, onChangesSaved, filter
   
     const handleRemoveObject = (id: string, categoryId: string) => {
       setDeletedObjects([...deletedObjects, { id, categoryId }]);
+    
       const updatedObjects = objects.filter(obj => obj.id !== id);
-      const sortedObjects = updatedObjects.map((obj, index) => ({
-        ...obj,
-        sort: obj.category === categoryId ? index + 1 : obj.sort,
-      }));
-      setObjects(sortedObjects);
+    
+      const categoryItems = updatedObjects
+        .filter(obj => obj.category === categoryId)
+        .sort((a, b) => a.sort - b.sort);
+    
+      const newObjects = updatedObjects.map(obj => {
+        if (obj.category !== categoryId) return obj;
+        const newIndex = categoryItems.findIndex(item => item.id === obj.id);
+        return { ...obj, sort: newIndex + 1 };
+      });
+    
+      setObjects(newObjects);
       setHasChanges(true);
     };
   
@@ -276,7 +282,7 @@ const ObjectsEditor = ({ moduleId, productId, categories, onChangesSaved, filter
       <>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button variant="secondary" className='ml-2' onClick={() => { setStep(1); setProductName(''); setDescription(''); setImageUrl(''); setFields([{ name: '', value: '', icon: '', address: false, link: false, gremium: false }]); }}>
+            <Button variant="secondary" onClick={() => { setStep(1); setProductName(''); setDescription(''); setImageUrl(''); setFields([{ name: '', value: '', icon: '', address: false, link: false, gremium: false }]); }}>
                 Produkt hinzufügen
             </Button>
           </DialogTrigger>

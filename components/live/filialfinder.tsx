@@ -10,7 +10,6 @@ import {
     SheetTitle,
     SheetTrigger,
 } from "@/components/ui/sheet";
-import { Progress } from "@/components/ui/progress";
 import * as Icons from 'react-icons/fa6';
 import { Input } from '../ui/input';
 
@@ -54,6 +53,9 @@ const Filialfinder: React.FC<FilialfinderProps> = ({ product, module }) => {
     const [loading, setLoading] = useState<boolean>(true);
     const [searchTerm, setSearchTerm] = useState<string>('');
     const db = getFirestore();
+
+    // Helper to detect if a string contains HTML tags
+    const hasHTML = (text: string) => /<\/?[a-z][\s\S]*>/i.test(text);
 
     useEffect(() => {
         if (module.type === 'Filialfinder') {
@@ -154,7 +156,7 @@ const Filialfinder: React.FC<FilialfinderProps> = ({ product, module }) => {
             return (
                 <div className='flex gap-5 items-center max-w-[calc(90dvw-40px)]'>
                     <div>
-                        {field.icon ? getIconComponent(field.icon) : <Icons.FaArrowUpRightFromSquare />}
+                        <Icons.FaLocationDot style={{ color: module.settings, height:"15px", width:"15px" }} />
                     </div>
                     <div>
                         <p className='text-black'>{field.name}</p>
@@ -229,7 +231,14 @@ const Filialfinder: React.FC<FilialfinderProps> = ({ product, module }) => {
                                             <SheetHeader>
                                                 <SheetTitle className='text-black text-start mb-8'>
                                                     {obj.name}
-                                                    {obj.description !== '.' && <p className='text-sm text-black/70 font-regular'>{obj.description}</p>}
+                                                    {obj.description !== '.' && (
+                                                        hasHTML(obj.description)
+                                                        ? <div
+                                                            className='text-sm text-black/70 font-regular'
+                                                            dangerouslySetInnerHTML={{ __html: obj.description }}
+                                                          />
+                                                        : <p className='text-sm text-black/70 font-regular'>{obj.description}</p>
+                                                    )}
                                                     {obj.imageUrl !== '.' && <img src={obj.imageUrl} alt={obj.name} className='mt-2 max-h-[220px]' />}
                                                 </SheetTitle>
                                                 <SheetDescription className='text-start'>

@@ -94,7 +94,7 @@ const CategoriesEditor = ({ categories, setCategories, moduleId, productId, onCh
     return (
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         <SheetTrigger asChild>
-          <Button variant="secondary" onClick={() => setIsSheetOpen(true)}>Kategorien</Button>
+          <Button variant="secondary" className="mx-2" onClick={() => setIsSheetOpen(true)}>Kategorien</Button>
         </SheetTrigger>
         <SheetContent className="min-w-[90dvw] md:min-w-[500px] flex flex-col">
           <SheetHeader>

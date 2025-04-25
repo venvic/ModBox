@@ -5,9 +5,8 @@ import { getFirestore, Firestore, FieldValue } from "firebase-admin/firestore";
 import { getStorage, Storage } from "firebase-admin/storage";
 
 const serviceAccount = JSON.parse(process.env.NEXT_PUBLIC_SERVICE_ACCOUNT || '{}');
-const storageBucketName = process.env.NEXT_PUBLIC_STORAGE_BUCKET || ''; // Ensure this environment variable is set
+const storageBucketName = process.env.NEXT_PUBLIC_STORAGE_BUCKET || '';
 
-// Initialize Firebase app and Firestore instance at the module level
 let firebaseApp: App;
 let firestore: Firestore;
 let auth: Auth;
@@ -16,7 +15,7 @@ let storage: Storage;
 if (!getApps().length) {
     firebaseApp = initializeApp({
         credential: cert(serviceAccount),
-        storageBucket: storageBucketName, // Specify the storage bucket
+        storageBucket: storageBucketName,
     });
     firestore = getFirestore(firebaseApp);
     auth = getAuth(firebaseApp);
@@ -174,6 +173,12 @@ export async function GET(req: NextRequest) {
             decodedToken = await verifyToken(idToken);
         } catch (err) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        const infoRef = firestore.doc(`global/users/${decodedToken.uid}/info`);
+        const infoSnap = await infoRef.get();
+        if (!infoSnap.exists || !infoSnap.data()?.allowDeleteModule) {
+            return NextResponse.json({ error: "Permission denied" }, { status: 403 });
         }
 
         const { searchParams } = new URL(req.url);

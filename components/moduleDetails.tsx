@@ -308,7 +308,7 @@ export const ModuleDetails = ({ productId, moduleId }: { productId: string, modu
 
               {module && module.type === 'Formular-Modul' && (
                 <>
-                  <Label>Email Titel</Label>
+                  <Label>Tabellentitel-Zusatzinfo</Label>
                   <Input className='mb-4 mt-1 w-full text-foreground placeholder:text-neutral-100/80' value={emailTitle} onChange={(e) => setEmailTitle(e.target.value)} placeholder='Sieht nur der Nutzer'/>
 
                   <Label>Datenschutzerklärung</Label>

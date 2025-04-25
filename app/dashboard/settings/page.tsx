@@ -18,9 +18,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { doc, getDoc, getFirestore } from 'firebase/firestore';
+import { doc, getDoc, getFirestore, updateDoc } from 'firebase/firestore';
 import { collection, getDocs } from 'firebase/firestore';
-import { ThemeSelector } from '@/components/theme-selector';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 
 export default function Page() {
@@ -37,6 +37,10 @@ export default function Page() {
   const superAdmins = process.env.NEXT_PUBLIC_SUPERADMINS?.split(',') || [];
   const [logs, setLogs] = useState<any[]>([]);
   const [filteredLogs, setFilteredLogs] = useState<any[]>([]);
+  const [logLimit, setLogLimit] = useState<number | 'all'>(20);
+  const [logUserFilter, setLogUserFilter] = useState<string>('all');
+  const [allowCreateModule, setAllowCreateModule] = useState(false)
+  const [allowDeleteModule, setAllowDeleteModule] = useState(false)
 
   useEffect(() => {
     const auth = getAuth();
@@ -73,7 +77,7 @@ export default function Page() {
   }, []);
 
    useEffect(() => {
-    const fetchProjects = async () => {
+    const fetchProjects: () => Promise<void> = async () => {
       try {
         const db = getFirestore();
         const productsSnapshot = await getDocs(collection(db, 'product'));
@@ -165,6 +169,12 @@ export default function Page() {
     fetchProjects();
   }, []);
 
+  useEffect(() => {
+    const next = logUserFilter === 'all'
+      ? logs
+      : logs.filter((log) => log.uid === logUserFilter);
+    setFilteredLogs(next);
+  }, [logs, logUserFilter]);
 
   const handleCreateUser = async () => {
     try {
@@ -220,10 +230,31 @@ export default function Page() {
     setIsKillSwitchModalOpen(false);
   };
 
-  const handleEditUser = (user: { uid: string; email: string }) => {
-    setSelectedUser(user);
-    setIsEditModalOpen(true);
-  };
+  const handleEditUser = async (user: { uid: string; email: string }) => {
+    setSelectedUser(user)
+    const db = getFirestore()
+    const infoRef = doc(db, 'global/users', user.uid, 'info')
+    const snap = await getDoc(infoRef)
+    const data = snap.exists() ? snap.data() : {}
+    setAllowCreateModule(!!data.allowCreateModule)
+    setAllowDeleteModule(!!data.allowDeleteModule)
+    setIsEditModalOpen(true)
+  }
+
+  const handleToggleCreateModule = async (checked: boolean) => {
+    if (!selectedUser) return
+    const db = getFirestore()
+    const infoRef = doc(db, 'global/users', selectedUser.uid, 'info')
+    await updateDoc(infoRef, { allowCreateModule: checked })
+    setAllowCreateModule(checked)
+  }
+  const handleToggleDeleteModule = async (checked: boolean) => {
+    if (!selectedUser) return
+    const db = getFirestore()
+    const infoRef = doc(db, 'global/users', selectedUser.uid, 'info')
+    await updateDoc(infoRef, { allowDeleteModule: checked })
+    setAllowDeleteModule(checked)
+  }
 
   const handleResetPassword = async () => {
     try {
@@ -338,7 +369,10 @@ export default function Page() {
     }
   };
 
-  const displayedLogs = filteredLogs;
+  const displayedLogs =
+    logLimit === 'all'
+      ? filteredLogs
+      : filteredLogs.slice(0, logLimit);
   const isSuperAdmin = userId ? superAdmins.includes(userId) : false;
 
   return (
@@ -427,7 +461,34 @@ export default function Page() {
           </div>
 
           <div className='w-full h-fit py-12'>
-            <h1 className='font-semibold text-lg'>Aktivitäten</h1>
+            <div className='flex justify-between items-center'>
+              <h1 className='font-semibold text-lg'>Aktivitäten</h1>
+              <div className='flex gap-2 items-center'>
+                <Select onValueChange={(v) => setLogUserFilter(v)}>
+                  <SelectTrigger className='w-[180px] text-foreground'>
+                    <SelectValue placeholder={logUserFilter === 'all' ? 'Alle' : users.find(u=>u.uid===logUserFilter)?.email} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Alle</SelectItem>
+                    {users.map((user) => (
+                      <SelectItem key={user.uid} value={user.uid}>
+                        {user.email}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select onValueChange={(v) => setLogLimit(v === 'all' ? 'all' : parseInt(v))}>
+                  <SelectTrigger className='w-[100px] text-foreground'>
+                    <SelectValue placeholder={logLimit === 'all' ? 'Alle' : logLimit.toString()} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="all">Alle</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
             <div className='mt-4'>
               <Table>
                 <TableCaption>Eine Liste aller Aktivitäten.</TableCaption>
@@ -481,6 +542,22 @@ export default function Page() {
                     }}
                     placeholder={projects.length > 0 ? "Projekte auswählen" : "Keine Projekte verfügbar"}
                   />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={allowCreateModule}
+                      onCheckedChange={(c) => handleToggleCreateModule(!!c)}
+                    />
+                    <label>Module erstellen</label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={allowDeleteModule}
+                      onCheckedChange={(c) => handleToggleDeleteModule(!!c)}
+                    />
+                    <label>Module löschen</label>
+                  </div>
                 </div>
                 <Button onClick={handleUpdateUserProjects}>Projekte aktualisieren</Button>
                 <Button variant="outline" onClick={handleResetPassword}>Passwort zurücksetzen</Button>

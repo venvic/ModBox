@@ -24,6 +24,7 @@ import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-ki
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useCurrentTheme } from './theme-provider';
+import { getAuth } from 'firebase/auth'
 
 if (!getApps().length) {
   initializeApp(firebaseConfig);
@@ -329,6 +330,7 @@ export const ProductModules = ({ productId }: { productId: string }) => {
   const [newCategoryName, setNewCategoryName] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const theme = useCurrentTheme();
+  const [allowCreateModuleBtn, setAllowCreateModuleBtn] = useState(false)
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -432,6 +434,18 @@ export const ProductModules = ({ productId }: { productId: string }) => {
 
     fetchProducts();
   }, []);
+
+  // lade Recht zum Modul-Erstellen
+  useEffect(() => {
+    const fetchPerm = async () => {
+      const user = getAuth().currentUser
+      if (!user) return
+      const infoRef = doc(db, 'global/users', user.uid, 'info')
+      const snap = await getDoc(infoRef)
+      setAllowCreateModuleBtn(!!snap.exists() && !!snap.data()?.allowCreateModule)
+    }
+    fetchPerm()
+  }, [])
 
   const handleDragEnd = async (event: any) => {
     const { active, over } = event;
@@ -640,7 +654,11 @@ export const ProductModules = ({ productId }: { productId: string }) => {
                     >
                       <RiListSettingsLine />
                     </Button>
-                    <Button variant='secondary' onClick={() => setIsDialogOpen(true)}>Modul erstellen</Button>
+                    {allowCreateModuleBtn && (
+                      <Button variant='secondary' onClick={() => setIsDialogOpen(true)}>
+                        Modul erstellen
+                      </Button>
+                    )}
                 </div>
             </div>
           </>
@@ -838,7 +856,7 @@ export const ProductModules = ({ productId }: { productId: string }) => {
             .map((module) => (
               <div
                 key={module.id}
-                className={`p-4 rounded-lg flex flex-col text-center items-center relative ${theme === "brain-rot" && "backdrop-blur-sm bg-black/30"} ${theme === "modern" ? "bg-violet-500/10 border border-white/5" : "bg-gray-500/15" } ${!isEditMode ? 'cursor-pointer' : ''}`}
+                className={`p-4 rounded-lg flex flex-col text-center items-center relative ${theme === "brain-rot" && "backdrop-blur-md bg-black/40"} ${theme === "modern" ? "bg-violet-500/10 border border-white/5" : "bg-gray-500/15" } ${!isEditMode ? 'cursor-pointer' : ''}`}
                 onClick={() => !isEditMode && router.push(`/dashboard/${productId}/modules/${module.id}`)}
               >
                 <div className={`text-2xl rounded-full mb-2 p-5 ${theme === "modern" ? "bg-white/5 border border-white/5" : "bg-gray-500/20" }`} style={{ color: module.settings }}>{getIcon(module.type)}</div>

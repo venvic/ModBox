@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogFooter } from 
 import { Button } from "@/components/ui/button"
 import { Check } from "lucide-react"
 import { getAuth } from "firebase/auth"
+import { FaSun } from "react-icons/fa6"
 
 type ThemeOption = "cosmema" | "modern" | "minimal" | "brain-rot"
 const LAST_USED_THEME_KEY = "last_used_theme"
@@ -120,11 +121,11 @@ export function ThemeSelector() {
   return (
     <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="ghost" className="justify-start px-2 py-1 h-auto font-normal">
-          Darstellung ändern
+        <Button variant="ghost" className="justify-start px-3 py-2 border w-full h-auto flex items-center font-normal">
+          <FaSun/> {selectedTheme}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="theme-dialog sm:max-w-md">
         <DialogTitle>Darstellung wählen</DialogTitle>
         <div className="py-4">
           <div className="grid grid-cols-3 gap-4">

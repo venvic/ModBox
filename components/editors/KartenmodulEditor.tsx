@@ -16,7 +16,7 @@ import { firebaseConfig } from '@/database';
 import { FaTrash } from 'react-icons/fa6';
 import getRandomId from '@/utils/getRandomId';
 import { Dialog, DialogContent, DialogFooter, DialogTitle } from "@/components/ui/dialog";
-import { Map, Marker, MapType, ColorScheme, FeatureVisibility } from 'mapkit-react';
+import AddressSelector from '@/components/addressSelector';
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -190,30 +190,11 @@ const KartenmodulEditor = ({ id, productId, onChangesSaved }: { id: string, prod
         <DialogContent>
           <DialogTitle className='text-foreground'>Position auswählen</DialogTitle>
           <div className='w-full h-96'>
-            {center.latitude !== 0 && center.longitude !== 0 ? (
-              <Map
-                colorScheme={ColorScheme.Dark}
-                mapType={MapType.Standard}
-                token={mapToken}
-                initialRegion={{
-                  centerLatitude: center.latitude,
-                  centerLongitude: center.longitude,
-                  latitudeDelta: 0.1,
-                  longitudeDelta: 0.1,
-                }}
-                onLongPress={(event) => {
-                  const coordinates = event.toCoordinates();
-                  setSelectedLocation({ latitude: coordinates.latitude, longitude: coordinates.longitude });
-                }}
-                showsPointsOfInterest={true}
-                showsCompass={FeatureVisibility.Hidden}
-                showsScale={FeatureVisibility.Hidden}
-              >
-                {selectedLocation && <Marker color='#0FA7AF' latitude={selectedLocation.latitude} longitude={selectedLocation.longitude} />}
-              </Map>
-            ) : (
-              <p className="text-foreground">Karte wird geladen...</p>
-            )}
+            <AddressSelector
+              onAddressSelect={(_, coords) => {
+                setSelectedLocation(coords);
+              }}
+            />
           </div>
           <DialogFooter className='mt-4'>
             <Button onClick={() => setIsMapDialogOpen(false)}>Abbrechen</Button>

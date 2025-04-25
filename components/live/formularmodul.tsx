@@ -137,7 +137,7 @@ const Formularmodul: React.FC<FormularModulProps> = ({ product, module }) => {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ emailHTML, activeRecipients, emailTitle: module.emailTitle }),
+            body: JSON.stringify({ emailHTML, activeRecipients, moduleTitle: module.name, emailTitle: module.emailTitle }),
         });
 
         if (response.ok) {

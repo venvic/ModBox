@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import Statistics from '@/components/statisticsMonitor';
 import getRandomId from '@/utils/getRandomId';
 import { useCurrentTheme } from '@/components/theme-provider';
+import { getAuth } from 'firebase/auth'
 
 if (!getApps().length) {
   initializeApp(firebaseConfig);
@@ -148,8 +149,8 @@ export default function Page() {
   const [searchTerm, setSearchTerm] = useState('');
   const [productModulesCount, setProductModulesCount] = useState<{ name: string; slug: string; modulesCount: number }[]>([]);
   const [productPageViews, setProductPageViews] = useState([]);
-  const [grantedProducts, setGrantedProducts] = useState<string[] | "all">([]);
-  const [isProductsLoaded, setIsProductsLoaded] = useState(false);
+  const [allowCreateModuleBtn, setAllowCreateModuleBtn] = useState(false);
+  const [userProjects, setUserProjects] = useState<string[] | 'all'>('all');
   const router = useRouter();
   const theme = useCurrentTheme();
 
@@ -158,7 +159,6 @@ export default function Page() {
       if (user) {
         setTimeout(() => {
           setUser(user);
-          setLoading(false);
         }, 1100);
       } else {
         router.push('/');
@@ -179,33 +179,30 @@ export default function Page() {
   }, [loading]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const productsList = await fetchProducts();
+    if (!user) return;
+    const loadAll = async () => {
+      const infoRef = doc(db, 'global/users', user.uid, 'info');
+      const snap = await getDoc(infoRef);
+      setAllowCreateModuleBtn(!!snap.exists() && !!snap.data()?.allowCreateModule);
+      const p = snap.exists() ? snap.data()?.projects : 'all';
+      const projectsData = p === 'all' ? 'all' : Array.isArray(p) ? p : 'all';
+      setUserProjects(projectsData);
+
+      const allProducts = await fetchProducts();
+      const visible = projectsData === 'all'
+        ? allProducts
+        : allProducts.filter(pr => projectsData.includes(pr.id));
       const modulesCount = await fetchProductModulesCount();
       const pageViews = await fetchProductPageViews();
-      const grantedProducts = await fetchUserRights();
 
-      if (grantedProducts === null) {
-        return;
-      }
-
-      if (grantedProducts !== "all") {
-        const filteredProducts = productsList.filter(product =>
-          grantedProducts.includes(product.id)
-        );
-        setProducts(filteredProducts);
-      } else {
-        setProducts(productsList);
-      }
-
-      setGrantedProducts(grantedProducts);
+      setProducts(visible);
       setProductModulesCount(modulesCount);
       setProductPageViews(pageViews);
-      setIsProductsLoaded(true);
-    };
 
-    fetchData();
-  }, []);
+      setLoading(false);
+    };
+    loadAll();
+  }, [user]);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -231,9 +228,10 @@ export default function Page() {
     product.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (loading || !isProductsLoaded) {
+  if (loading) {
     return (
-      <div className='absolute h-screen w-screen flex items-center justify-center bg-background top-0 left-0'>
+      <div className='absolute h-screen w-screen flex flex-col gap-3 items-center justify-center bg-background top-0 left-0'>
+        {user?.displayName && <h1 className='font-bold text-xl text-secondary'>Willkommen {user.displayName}</h1>}
         <Progress value={progress} className='w-1/3' />
       </div>
     );
@@ -250,11 +248,11 @@ export default function Page() {
             onChange={(e) => setSearchTerm(e.target.value)}
             className='w-full text-foreground placeholder:text-foreground/60 bg-background/60 backdrop-blur-xl'
           />
-          {grantedProducts === "all" && (
+          {allowCreateModuleBtn && (
             <Button variant='secondary' onClick={() => setIsDialogOpen(true)}>Hinzufügen</Button>
           )}
         </div>
-        {grantedProducts === "all" && (
+        {allowCreateModuleBtn && (
           <AddProductDialog isOpen={isDialogOpen} onClose={() => setIsDialogOpen(false)} onProductAdded={handleProductAdded} />
         )}
         {!isDialogOpen &&
@@ -277,7 +275,7 @@ export default function Page() {
               </tbody>
             </table>
           </div>
-          {grantedProducts === "all" && <Statistics />}
+          {allowCreateModuleBtn && <Statistics />}
         </>
         }
       </div>

@@ -1,13 +1,12 @@
 'use client'
 
-// Deletes from Firestore occur in handleSaveChanges and handleSaveProduct functions
-
 import React, { useState, useEffect } from 'react';
 import { collection, getDocs, getFirestore } from "firebase/firestore";
 import { Input } from '../ui/input';
 import { toast } from 'sonner';
 import CategoriesEditor from './filialfinder/categories';
 import ObjectsEditor from './filialfinder/objects';
+import Importer from './filialfinder/importer';
 
 const db = getFirestore();
 
@@ -46,6 +45,7 @@ const FilialfinderEditor = ({ id, productId, onChangesSaved }: { id: string, pro
       </div>
 
       <div className='h-[calc(100dvh-50px)] max-h-[802px] overflow-y-scroll md:h-full w-full mt-4'>
+        <Importer moduleId={id} productId={productId} />
         <CategoriesEditor moduleId={id} productId={productId} categories={categories} setCategories={setCategories} onChangesSaved={onChangesSaved} />
         <ObjectsEditor moduleId={id} productId={productId} categories={categories} onChangesSaved={onChangesSaved} filteredObjects={filteredObjects} />
       </div>
