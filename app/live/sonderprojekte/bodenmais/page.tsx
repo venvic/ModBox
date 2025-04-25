@@ -27,18 +27,24 @@ interface PaginationMeta {
   pageSize: number
 }
 
+interface EndpointStatus {
+  type: string
+  loading: boolean
+  loaded: boolean
+  error: boolean
+}
+
 const CACHE_KEY_PREFIX = "bodenmais-tourism-data"
-const CACHE_EXPIRY = 60 * 60 * 1000 // 1 hour
+const CACHE_EXPIRY = 60 * 60 * 1000
 
 const API_BASE_URL = "https://data.bayerncloud.digital/api/v4/endpoints"
-const API_TOKEN = "c6119877bdad67114d5ecd3b0e3999e4"
+const API_TOKEN = process.env.NEXT_PUBLIC_BAYERNCLOUD_API_KEY
 const ENDPOINTS = [
   { url: "/list_events", type: "event", cacheKey: `${CACHE_KEY_PREFIX}-events` },
   { url: "/list_attractions", type: "attraction", cacheKey: `${CACHE_KEY_PREFIX}-attractions` },
   { url: "/list_accommodations", type: "accommodation", cacheKey: `${CACHE_KEY_PREFIX}-accommodations` },
 ]
 
-// Helper functions for caching
 const getCachedData = (cacheKey: string) => {
   if (typeof window === "undefined") return null
 
@@ -70,24 +76,18 @@ const setCachedData = (cacheKey: string, data: any) => {
   )
 }
 
-// Helper function to check if an item is related to Bodenmais
 const isRelatedToBodenmais = (item: any): boolean => {
-  // Check various fields for "bodenmais" (case insensitive)
   const searchTerm = "bodenmais"
 
-  // Check location/address
   const locality = (item?.address?.addressLocality || "").toLowerCase()
   if (locality.includes(searchTerm)) return true
 
-  // Check name
   const name = (item?.name || "").toLowerCase()
   if (name.includes(searchTerm)) return true
 
-  // Check description
   const description = (item?.description || "").toLowerCase()
   if (description.includes(searchTerm)) return true
 
-  // Check if the location is in the Bayerischer Wald region (broader check)
   if (locality.includes("bayerischer wald")) return true
 
   return false
@@ -95,7 +95,14 @@ const isRelatedToBodenmais = (item: any): boolean => {
 
 export default function BodenmaistTourismWidget() {
   const [tourismData, setTourismData] = useState<TourismItem[]>([])
-  const [loading, setLoading] = useState(true)
+  const [endpointStatus, setEndpointStatus] = useState<EndpointStatus[]>(
+    ENDPOINTS.map((endpoint) => ({
+      type: endpoint.type,
+      loading: true,
+      loaded: false,
+      error: false,
+    })),
+  )
   const [activeTab, setActiveTab] = useState<string>("all")
   const [paginationMeta, setPaginationMeta] = useState<PaginationMeta>({
     total: 0,
@@ -103,6 +110,8 @@ export default function BodenmaistTourismWidget() {
     currentPage: 1,
     pageSize: 6,
   })
+
+  const isLoading = endpointStatus.some((status) => status.loading)
 
   const filteredData = activeTab === "all" ? tourismData : tourismData.filter((item) => item.type === activeTab)
 
@@ -198,61 +207,116 @@ export default function BodenmaistTourismWidget() {
     return items
   }
 
+  const fetchEndpointData = async (endpoint: (typeof ENDPOINTS)[0], delay: number) => {
+    setEndpointStatus((prev) =>
+      prev.map((status) => (status.type === endpoint.type ? { ...status, loading: true, error: false } : status)),
+    )
+
+    const cachedData = getCachedData(endpoint.cacheKey)
+    if (cachedData) {
+      console.log(`Found ${cachedData.length} cached items for ${endpoint.type}`)
+
+      setTourismData((prev) => [...prev, ...cachedData])
+
+      setPaginationMeta((prev) => {
+        const newTotal = prev.total + cachedData.length
+        return {
+          ...prev,
+          total: newTotal,
+          pages: Math.ceil(newTotal / prev.pageSize),
+        }
+      })
+
+      setEndpointStatus((prev) =>
+        prev.map((status) => (status.type === endpoint.type ? { ...status, loading: false, loaded: true } : status)),
+      )
+
+      return true
+    }
+
+    let retries = 0
+    let data = null
+
+    while (retries < 3 && data === null) {
+      console.log(`Fetching ${endpoint.url} (attempt ${retries + 1})`)
+      data = await fetchWithDelay(`${API_BASE_URL}${endpoint.url}`, delay + retries * 3000)
+      retries++
+    }
+
+    if (data) {
+      console.log(`Successfully fetched data from ${endpoint.url}`)
+      toast.success(`Daten für ${endpoint.type} erfolgreich geladen!`)
+
+      const processedData = processData(data, endpoint.type)
+
+      setCachedData(endpoint.cacheKey, processedData)
+
+      setTourismData((prev) => [...prev, ...processedData])
+
+      setPaginationMeta((prev) => {
+        const newTotal = prev.total + processedData.length
+        return {
+          ...prev,
+          total: newTotal,
+          pages: Math.ceil(newTotal / prev.pageSize),
+        }
+      })
+
+      setEndpointStatus((prev) =>
+        prev.map((status) => (status.type === endpoint.type ? { ...status, loading: false, loaded: true } : status)),
+      )
+
+      return true
+    } else {
+      console.error(`Failed to fetch data from ${endpoint.url} after ${retries} attempts`)
+      toast.error(`Fehler beim Laden von ${endpoint.type}`)
+
+      setEndpointStatus((prev) =>
+        prev.map((status) => (status.type === endpoint.type ? { ...status, loading: false, error: true } : status)),
+      )
+
+      return false
+    }
+  }
+
   const fetchAllData = async () => {
-    setLoading(true)
-
-    let allData: TourismItem[] = []
-    let fetchedAny = false
-
-    for (const endpoint of ENDPOINTS) {
-      const cachedData = getCachedData(endpoint.cacheKey)
-      if (cachedData) {
-        console.log(`Found ${cachedData.length} cached items for ${endpoint.type}`)
-        allData = [...allData, ...cachedData]
-        fetchedAny = true
-      }
-    }
-
-    if (fetchedAny) {
-      console.log(`Using cached data: ${allData.length} total items`)
-      setTourismData(allData)
-      setPaginationMeta((prev) => ({
-        ...prev,
-        total: allData.length,
-        pages: Math.ceil(allData.length / prev.pageSize),
-      }))
-      setLoading(false)
-      return
-    }
+    setTourismData([])
+    setEndpointStatus(
+      ENDPOINTS.map((endpoint) => ({
+        type: endpoint.type,
+        loading: true,
+        loaded: false,
+        error: false,
+      })),
+    )
 
     for (let i = 0; i < ENDPOINTS.length; i++) {
       const endpoint = ENDPOINTS[i]
-      const delay = i * 2000 
+      const delay = i * 2000
 
-      let retries = 0
-      let data = null
-
-      while (retries < 3 && data === null) {
-        console.log(`Fetching ${endpoint.url} (attempt ${retries + 1})`)
-        data = await fetchWithDelay(`${API_BASE_URL}${endpoint.url}`, delay + retries * 3000)
-        retries++
-      }
-
-      if (data) {
-        console.log(`Successfully fetched data from ${endpoint.url}`)
-        toast.success(`Daten für ${endpoint.type} erfolgreich geladen!`)
-
-        const processedData = processData(data, endpoint.type)
-        setCachedData(endpoint.cacheKey, processedData)
-        allData = [...allData, ...processedData]
-        fetchedAny = true
-      } else {
-        console.error(`Failed to fetch data from ${endpoint.url} after ${retries} attempts`)
-        toast.error(`Fehler beim Laden von ${endpoint.type}`)
-      }
+      fetchEndpointData(endpoint, delay)
     }
+  }
 
-    if (!fetchedAny || allData.length === 0) {
+  useEffect(() => {
+    const filteredItems = activeTab === "all" ? tourismData : tourismData.filter((item) => item.type === activeTab)
+
+    setPaginationMeta((prev) => ({
+      ...prev,
+      total: filteredItems.length,
+      pages: Math.ceil(filteredItems.length / prev.pageSize),
+      currentPage: 1,
+    }))
+  }, [activeTab, tourismData])
+
+  useEffect(() => {
+    fetchAllData()
+  }, [])
+
+  useEffect(() => {
+    const allEndpointsFinished = endpointStatus.every((status) => !status.loading)
+
+    if (allEndpointsFinished && tourismData.length === 0) {
       const fallbackData: TourismItem[] = [
         {
           id: "1",
@@ -289,39 +353,11 @@ export default function BodenmaistTourismWidget() {
         pages: Math.ceil(fallbackData.length / prev.pageSize),
       }))
 
-      if (allData.length === 0 && fetchedAny) {
-        toast.warning("Keine Einträge für Bodenmais gefunden. Beispiel-Daten angezeigt.")
-      } else {
-        toast.error("Fehler beim Abrufen der Tourismusdaten. Beispiel-Daten angezeigt.")
-      }
-    } else {
-      console.log(`Total items fetched: ${allData.length}`)
-      setTourismData(allData)
-      setPaginationMeta((prev) => ({
-        ...prev,
-        total: allData.length,
-        pages: Math.ceil(allData.length / prev.pageSize),
-      }))
-      toast.success(`Insgesamt ${allData.length} Einträge für Bodenmais geladen!`)
+      toast.warning("Keine Einträge für Bodenmais gefunden. Beispiel-Daten angezeigt.")
+    } else if (allEndpointsFinished && tourismData.length > 0) {
+      toast.success(`Insgesamt ${tourismData.length} Einträge für Bodenmais geladen!`)
     }
-
-    setLoading(false)
-  }
-
-  useEffect(() => {
-    const filteredItems = activeTab === "all" ? tourismData : tourismData.filter((item) => item.type === activeTab)
-
-    setPaginationMeta((prev) => ({
-      ...prev,
-      total: filteredItems.length,
-      pages: Math.ceil(filteredItems.length / prev.pageSize),
-      currentPage: 1,
-    }))
-  }, [activeTab, tourismData])
-
-  useEffect(() => {
-    fetchAllData()
-  }, [])
+  }, [endpointStatus, tourismData.length])
 
   const goToNextPage = () => {
     setPaginationMeta((prev) => ({
@@ -337,7 +373,6 @@ export default function BodenmaistTourismWidget() {
     }))
   }
 
-  // Get icon based on item type
   const getItemIcon = (type: string) => {
     switch (type) {
       case "event":
@@ -351,8 +386,29 @@ export default function BodenmaistTourismWidget() {
     }
   }
 
+  const getLoadingStatusText = () => {
+    const loadingEndpoints = endpointStatus
+      .filter((status) => status.loading)
+      .map((status) => {
+        switch (status.type) {
+          case "event":
+            return "Veranstaltungen"
+          case "attraction":
+            return "Sehenswürdigkeiten"
+          case "accommodation":
+            return "Unterkünfte"
+          default:
+            return status.type
+        }
+      })
+
+    if (loadingEndpoints.length === 0) return ""
+    return `Lade ${loadingEndpoints.join(", ")}...`
+  }
+
   return (
     <main className="min-h-screen bg-white">
+      <Toaster position="top-right" />
       <div className="max-w-full mx-auto">
         <header className="mb-6 py-6 text-center bg-[#94232C]">
           <h1 className="text-2xl font-bold text-white">Bodenmais Tourismus</h1>
@@ -369,41 +425,63 @@ export default function BodenmaistTourismWidget() {
             </TabsList>
           </Tabs>
 
-          <div className="flex justify-end mb-4">
-            <Button
-              variant="outline"
-              onClick={() => {
-                // Clear all caches
-                ENDPOINTS.forEach((endpoint) => {
-                  if (typeof window !== "undefined") {
-                    localStorage.removeItem(endpoint.cacheKey)
-                  }
-                })
-                // Refetch data
-                fetchAllData()
-                toast.info("Daten werden neu geladen...")
-              }}
-              className="flex items-center gap-2"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="animate-spin"
+          <div className="flex justify-between items-center mb-4">
+            {isLoading && (
+              <div className="text-sm text-gray-500 flex items-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="animate-spin mr-2"
+                >
+                  <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                </svg>
+                {getLoadingStatusText()}
+              </div>
+            )}
+
+            <div className="ml-auto">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  // Clear all caches
+                  ENDPOINTS.forEach((endpoint) => {
+                    if (typeof window !== "undefined") {
+                      localStorage.removeItem(endpoint.cacheKey)
+                    }
+                  })
+                  // Refetch data
+                  fetchAllData()
+                  toast.info("Daten werden neu geladen...")
+                }}
+                className="flex items-center gap-2"
               >
-                <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-              </svg>
-              Aktualisieren
-            </Button>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className={isLoading ? "animate-spin" : ""}
+                >
+                  <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                </svg>
+                Aktualisieren
+              </Button>
+            </div>
           </div>
 
-          {loading ? (
+          {tourismData.length === 0 && isLoading ? (
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (
                 <Card key={i} className="p-4 border-none bg-gray-200">
@@ -422,7 +500,9 @@ export default function BodenmaistTourismWidget() {
             <>
               {displayedItems.length === 0 ? (
                 <div className="p-8 text-center">
-                  <p className="text-lg text-gray-500">Keine Einträge gefunden.</p>
+                  <p className="text-lg text-gray-500">
+                    {isLoading ? "Daten werden geladen..." : "Keine Einträge gefunden."}
+                  </p>
                 </div>
               ) : (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
