@@ -181,7 +181,7 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: "Permission denied" }, { status: 403 });
         }
 
-        const { searchParams } = new URL(req.url);
+        const { searchParams } = req.nextUrl;
         const productId = searchParams.get('productId');
         const moduleId = searchParams.get('moduleId');
 

@@ -95,7 +95,7 @@ export default function Navbar() {
       <div className='max-w-[1900px] px-4 md:px-12 w-full h-fit flex justify-between items-center'>
         <div className='flex gap-4'>
           <Link href='/dashboard' className='text-sm'>Home</Link>
-          <Link href='/dashboard/usage' className='text-sm'>Nutzung</Link>
+          <Link href='/dashboard/status' className='text-sm'>Status</Link>
           <Link href='/dashboard/settings' className='text-sm'>Einstellungen</Link>
         </div>
 
