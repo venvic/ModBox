@@ -4,7 +4,7 @@ import { firebaseConfig } from "@/database";
 import { getApps, initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { useState, useEffect, JSX } from "react";
-import { FaPlus, FaCloudBolt, FaEnvelope, FaTrash, FaICursor, FaAt, FaPhone, FaTextWidth, FaRegSquareCheck, FaAnglesDown, FaGear, FaGrip } from "react-icons/fa6";
+import { FaPlus, FaCloudBolt, FaEnvelope, FaTrash, FaICursor, FaAt, FaPhone, FaTextWidth, FaRegSquareCheck, FaAnglesDown, FaGear, FaGrip, FaImagePortrait } from "react-icons/fa6";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -149,6 +149,7 @@ const fieldTypes = [
     { type: 'Messagefield', icon: <FaTextWidth className="text-black"/> },
     { type: 'Checkboxfield', icon: <FaRegSquareCheck className="text-black"/> },
     { type: 'Dropdownfield', icon: <FaAnglesDown className="text-black"/> },
+    { type: 'ImageField', icon: <FaImagePortrait className="text-black"/> },
 ];
 
 interface FieldConfiguratorProps {
@@ -226,7 +227,9 @@ const FieldConfigurator = ({ isOpen, onOpenChange, onSave, fieldData, changesMad
                         </SelectContent>
                     </Select>
                     <Input className="placeholder:text-foreground/40" value={fieldLabel} onChange={(e) => setFieldLabel(e.target.value)} placeholder="Label" />
-                    {fieldType !== 'Checkboxfield' && (
+                
+
+                    {fieldType !== 'Checkboxfield' && fieldType !== 'ImageField' &&  (
                         <Input className="placeholder:text-foreground/40" value={placeholder} onChange={(e) => setPlaceholder(e.target.value)} placeholder="Placeholder" />
                     )}
                     <div className="flex items-center gap-2">
@@ -275,7 +278,6 @@ const SortableItem = ({ id, children }: { id: string, children: (listeners: any)
   };
 
 const FormularmodulEditor = ({ id, productId, onChangesSaved }: { id: string, productId: string, onChangesSaved: () => void }) => {
-    const [searchTerm, setSearchTerm] = useState('');
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     interface Field {
         id: string;

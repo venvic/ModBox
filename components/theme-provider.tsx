@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 
-type ThemeOption = "cosmema" | "modern" | "minimal" | "brain-rot";
+type ThemeOption = "cosmema" | "modern" | "minimal";
 const LAST_USED_THEME_KEY = "last_used_theme";
 
 const ThemeContext = createContext<ThemeOption | undefined>(undefined);

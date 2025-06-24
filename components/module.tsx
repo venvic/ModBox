@@ -609,7 +609,7 @@ export const ProductModules = ({ productId }: { productId: string }) => {
   };
 
   return (
-    <div className={`min-h-screen w-screen flex justify-center ${theme === "brain-rot" && "bg-[url('/fun/bombardino.png')] bg-cover bg-center"} ${theme === "modern" ? "bg-gradient-to-br from-blue-950/50 via-purple-900/25 to-blue-900/35" : "bg-background"}`}>
+    <div className={`min-h-screen w-screen flex justify-center ${theme === "modern" ? "bg-gradient-to-br from-blue-950/50 via-purple-900/25 to-blue-900/35" : "bg-background"}`}>
       <div className='max-w-[1900px] w-full p-4 md:p-12'>
         {product && (
           <>
@@ -856,7 +856,7 @@ export const ProductModules = ({ productId }: { productId: string }) => {
             .map((module) => (
               <div
                 key={module.id}
-                className={`p-4 rounded-lg flex flex-col text-center items-center relative ${theme === "brain-rot" && "backdrop-blur-md bg-black/40"} ${theme === "modern" ? "bg-violet-500/10 border border-white/5" : "bg-gray-500/15" } ${!isEditMode ? 'cursor-pointer' : ''}`}
+                className={`p-4 rounded-lg flex flex-col text-center items-center relative ${theme === "modern" ? "bg-violet-500/10 border border-white/5" : "bg-gray-500/15" } ${!isEditMode ? 'cursor-pointer' : ''}`}
                 onClick={() => !isEditMode && router.push(`/dashboard/${productId}/modules/${module.id}`)}
               >
                 <div className={`text-2xl rounded-full mb-2 p-5 ${theme === "modern" ? "bg-white/5 border border-white/5" : "bg-gray-500/20" }`} style={{ color: module.settings }}>{getIcon(module.type)}</div>

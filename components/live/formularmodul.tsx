@@ -90,12 +90,21 @@ const Formularmodul: React.FC<FormularModulProps> = ({ product, module }) => {
                     <div style="width: 100%; background-color: #ffffff; padding: 20px;">
                         <h1 style="color: #333; font-size: 24px;">${module.emailTitle}</h1>
                         <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
-                            ${emailData.map((field, index) => `
-                                <tr style="background-color: ${index % 2 === 0 ? '#f7f7f7' : '#ffffff'};">
-                                    <td style="padding: 10px; font-weight: bold; border: 1px solid #ddd;">${field.label}:</td>
-                                    <td style="padding: 10px; border: 1px solid #ddd;">${field.value}</td>
-                                </tr>
-                            `).join('')}
+                            ${emailData.map((field, index) => {
+                                const isImage = field.value.startsWith('https://firebasestorage.googleapis.com');
+                                return `
+                                    <tr style="background-color: ${index % 2 === 0 ? '#f7f7f7' : '#ffffff'};">
+                                        <td style="padding: 10px; font-weight: bold; border: 1px solid #ddd;">${field.label}:</td>
+                                        <td style="padding: 10px; border: 1px solid #ddd;">
+                                            ${
+                                                isImage
+                                                ? `<img src="${field.value}" style="max-width:200px; display:block; margin-bottom:8px;"/><a href="${field.value}" target="_blank" style="color:#0066cc; text-decoration:none;">Link öffnen</a>`
+                                                : field.value
+                                            }
+                                        </td>
+                                    </tr>
+                                `;
+                            }).join('')}
                         </table>
 
                         <div style="margin-top: 20px; font-size: 14px; color: #666;">
@@ -116,6 +125,27 @@ const Formularmodul: React.FC<FormularModulProps> = ({ product, module }) => {
         const formData = new FormData(event.target as HTMLFormElement);
         const formValues = Object.fromEntries(formData.entries());
 
+        const fileInput = (event.target as HTMLFormElement).querySelector('input[type="file"]') as HTMLInputElement;
+        let uploadedImageUrl = '';
+        if (fileInput?.files?.length) {
+            const imageFormData = new FormData();
+            imageFormData.append('file', fileInput.files[0]);
+
+            const uploadRes = await fetch('/api/uploadTempImage', {
+                method: 'POST',
+                body: imageFormData,
+            });
+
+            if (!uploadRes.ok) {
+                setNotification('Bild konnte nicht hochgeladen werden.');
+                setIsSubmitting(false);
+                return;
+            }
+
+            const { url } = await uploadRes.json();
+            uploadedImageUrl = url;
+        }
+
         const recipientsQuery = query(collection(db, `product/${product.id}/modules/${module.id}/recipients`));
         const querySnapshot = await getDocs(recipientsQuery);
         const recipientsList = querySnapshot.docs.map(doc => ({
@@ -123,20 +153,21 @@ const Formularmodul: React.FC<FormularModulProps> = ({ product, module }) => {
             ...(doc.data() as { active: boolean; email: string })
         }));
 
-        const activeRecipients = recipientsList.filter(recipient => recipient.active).map(recipient => recipient.email);
+        const activeRecipients = recipientsList.filter(r => r.active).map(r => r.email);
 
         const emailData = data.map(field => ({
             label: field.label,
-            value: formValues[field.id]?.toString() || ''
+            value:
+                field.type === 'ImageField'
+                    ? uploadedImageUrl || 'Kein Bild hochgeladen'
+                    : formValues[field.id]?.toString() || ''
         }));
 
         const emailHTML = generateEmailHTML(emailData);
 
         const response = await fetch('/api/sendmail', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ emailHTML, activeRecipients, moduleTitle: module.name, emailTitle: module.emailTitle }),
         });
 
@@ -153,13 +184,13 @@ const Formularmodul: React.FC<FormularModulProps> = ({ product, module }) => {
             }, 2000);
         } else {
             const errorData = await response.json();
-            setNotification(`Nachricht konnte nicht versendet werden!  ${errorData.message}`);
-
+            setNotification(`Nachricht konnte nicht versendet werden! ${errorData.message}`);
             setTimeout(() => {
                 setNotification(null);
                 setShowFullScreenNotification(false);
             }, 2000);
         }
+
         setIsSubmitting(false);
     };
 
@@ -203,9 +234,25 @@ const Formularmodul: React.FC<FormularModulProps> = ({ product, module }) => {
                                     </div>
                                 ) : (
                                     <>
-                                        <label htmlFor={field.id} className="font-medium text-sm text-neutral-800 mt-3 mb-1">{field.label} <span className="text-red-600">{field.required && '*'}</span></label>
-                                        {field.type === 'Dropdownfield' ? (
-                                            <select id={field.id} name={field.id} className={`border border-gray-500/30 p-2 rounded focus:outline-none`}>
+                                        <label htmlFor={field.id} className="font-medium text-sm text-neutral-800 mt-3 mb-1">
+                                            {field.label} <span className="text-red-600">{field.required && '*'}</span>
+                                        </label>
+                                        {field.type === 'ImageField' ? (
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                id={field.id}
+                                                name={field.id}
+                                                className="border border-gray-500/30 p-2 w-full rounded focus:outline-none"
+                                                required={field.required}
+                                            />
+                                        ) : field.type === 'Dropdownfield' ? (
+                                            <select
+                                                id={field.id}
+                                                name={field.id}
+                                                className="border border-gray-500/30 p-2 rounded focus:outline-none"
+                                                required={field.required}
+                                            >
                                                 {field.options.map((option, index) => (
                                                     <option key={index} value={option}>{option}</option>
                                                 ))}
@@ -217,7 +264,7 @@ const Formularmodul: React.FC<FormularModulProps> = ({ product, module }) => {
                                                 type={field.type === 'Emailfield' ? 'email' : field.type === 'Phonefield' ? 'tel' : 'text'}
                                                 placeholder={field.placeholder}
                                                 required={field.required}
-                                                className={`border border-gray-500/30 p-2 rounded focus:outline-none`}
+                                                className="border border-gray-500/30 p-2 rounded focus:outline-none"
                                             />
                                         )}
                                     </>

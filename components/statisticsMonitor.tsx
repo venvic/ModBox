@@ -75,8 +75,6 @@ const Statistics = () => {
         return "#D97706"; // Amber-like color
       case "minimal":
         return "#A8A29E"; // Gray-like color
-      case "brain-rot":
-          return "#32332B"; // Gray-like color
       default:
         return "#6A6D95"; // Default for "modern"
     }

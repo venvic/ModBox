@@ -238,7 +238,7 @@ export default function Page() {
   }
 
   return (
-    <div className={`min-h-screen w-screen flex justify-center ${theme === "brain-rot" && "bg-[url('/fun/tralalelo.png')] bg-cover bg-center "} ${theme === "modern" ? "bg-gradient-to-br from-blue-950/50 via-purple-900/25 to-blue-900/35" : "bg-background"}`}>
+    <div className={`min-h-screen w-screen flex justify-center bg-cover bg-center "} ${theme === "modern" ? "bg-gradient-to-br from-blue-950/50 via-purple-900/25 to-blue-900/35" : "bg-background"}`}>
       <div className='max-w-[1900px] w-full p-4 md:p-12'>
         <div className='w-full flex gap-10'>
           <Input

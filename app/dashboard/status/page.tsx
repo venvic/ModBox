@@ -39,7 +39,7 @@ export default function Page() {
 
             <h2 className='mt-12'>Aktueller Status: heimatinfo.web.app</h2>
 
-            <div className='mt-4 grid grid-cols-1 md:grid-cols-2 divide-y divide-x border min-h-24 bg-accent'>
+            <div className='mt-4 grid grid-cols-1 md:grid-cols-2 divide-y divide-x border min-h-24 bg-accent rounded'>
                 <div className='w-full h-full py-6 px-6 flex justify-between'>
                     <div className='h-full flex flex-col justify-between'>
                         <h3 className='font-semibold'>ModBox Dashboard</h3>

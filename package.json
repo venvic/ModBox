@@ -48,6 +48,8 @@
     "dotenv": "^16.4.7",
     "firebase": "^11.3.1",
     "firebase-admin": "^12.7.0",
+    "firebase-functions": "^6.3.2",
+    "formidable": "^3.5.4",
     "framer-motion": "^12.6.2",
     "google-auth-library": "^9.15.1",
     "google-gax": "^4.4.1",
@@ -75,6 +77,7 @@
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
+    "@types/formidable": "^3.4.5",
     "@types/js-cookie": "^3.0.6",
     "@types/node": "^20",
     "@types/nodemailer": "^6.4.17",

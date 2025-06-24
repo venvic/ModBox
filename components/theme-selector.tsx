@@ -7,7 +7,7 @@ import { Check } from "lucide-react"
 import { getAuth } from "firebase/auth"
 import { FaSun } from "react-icons/fa6"
 
-type ThemeOption = "cosmema" | "modern" | "minimal" | "brain-rot"
+type ThemeOption = "cosmema" | "modern" | "minimal"
 const LAST_USED_THEME_KEY = "last_used_theme"
 const ALLOWED_UIDS = ["WermfDVKf4eyl8TXR1wGmOlFZsA2", "zYulj2FQOfVebqKhLMmX3LfYM193"]
 
@@ -63,12 +63,6 @@ function ThemePreview({ theme }: { theme: ThemeOption }) {
           </div>
         </div>
       )
-    case "brain-rot":
-      return (
-        <div className="w-full h-full aspect-video rounded-sm flex items-center justify-center bg-gray-800">
-          <img src="/fun/preview.png" alt="Brain Rot Preview" className="object-cover w-full h-full" />
-        </div>
-      )
   }
 }
 
@@ -114,9 +108,6 @@ export function ThemeSelector() {
   }, [selectedTheme])
 
   const availableThemes: ThemeOption[] = ["cosmema", "modern", "minimal"]
-  if (userUID && ALLOWED_UIDS.includes(userUID)) {
-    availableThemes.push("brain-rot")
-  }
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
@@ -143,7 +134,7 @@ export function ThemeSelector() {
                   <ThemePreview theme={theme} />
                 </div>
                 <div className="p-2 bg-background border-t">
-                  <p className="text-sm font-medium capitalize">{theme === "brain-rot" ? "Brain Rot" : theme}</p>
+                  <p className="text-sm font-medium capitalize">{theme}</p>
                 </div>
                 {selectedTheme === theme && (
                   <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full p-0.5">

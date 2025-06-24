@@ -2,6 +2,7 @@ import {onRequest} from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import * as admin from "firebase-admin";
+import * as path from 'path';
 
 const serviceAccount = JSON.parse(process.env.NEXT_PUBLIC_SERVICE_ACCOUNT || '{}');
 
@@ -9,6 +10,39 @@ admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
 
+export const cleanOldTempImages = onSchedule("every day 11:45", async (context) => {
+  const bucket = admin.storage().bucket();
+  const [files] = await bucket.getFiles({ prefix: 'TEMP_UPLOADS/' });
+
+  const now = Date.now();
+  const THIRTY_DAYS_IN_MS = 30 * 24 * 60 * 60 * 1000;
+
+  for (const file of files) {
+    const fileName = path.basename(file.name);
+
+    const timestampPart = fileName.split('-')[0];
+    const timestamp = Number(timestampPart);
+
+    if (isNaN(timestamp)) {
+      logger.info(`Skipping file with invalid timestamp format: ${fileName}`);
+      continue;
+    }
+
+    const ageInMs = now - timestamp;
+
+    if (ageInMs > THIRTY_DAYS_IN_MS) {
+      logger.info(`Deleting file: ${file.name}, age: ${(ageInMs / (1000 * 60 * 60 * 24)).toFixed(1)} days`);
+      try {
+        await file.delete();
+        logger.info(`Deleted: ${file.name}`);
+      } catch (err) {
+        logger.error(`Failed to delete file ${file.name}: ${err}`);
+      }
+    }
+  }
+
+  logger.info('TEMP_UPLOADS cleanup completed');
+});
 
 export const saveDailyStatistics = onSchedule("every day 00:00", async (context) => {
   const db = admin.firestore();
