@@ -88,7 +88,7 @@ const Formularmodul: React.FC<FormularModulProps> = ({ product, module }) => {
             <html>
                 <body style="font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4;">
                     <div style="width: 100%; background-color: #ffffff; padding: 20px;">
-                        <h1 style="color: #333; font-size: 24px;">${module.emailTitle}</h1>
+                        <h1 style="color: #333; font-size: 24px;">${module.emailTitle ?  module.emailTitle : module.name}</h1>
                         <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
                             ${emailData.map((field, index) => {
                                 const isImage = field.value.startsWith('https://firebasestorage.googleapis.com');
