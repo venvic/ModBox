@@ -26,6 +26,7 @@ import TerminalEditor from './editors/TerminalEditor';
 import handleDelete from '@/utils/dataHandler';
 import KontaktmodulEditor from './editors/KontaktmodulEditor';
 import BeteiligungEditor from './editors/BeteiligungEditor';
+import LinkmodulEditor from './editors/LinkmodulEditor';
 
 if (!getApps().length) {
   initializeApp(firebaseConfig);
@@ -51,6 +52,8 @@ const getEditorComponent = (productId:string, id:string, type: string, onChanges
       return <BeteiligungEditor id={id} productId={productId} onChangesSaved={onChangesSaved} />;
     case 'Kontakt-Modul':
       return <KontaktmodulEditor id={id} productId={productId} onChangesSaved={onChangesSaved} />;
+    case 'Link-Modul':
+      return <LinkmodulEditor id={id} productId={productId} onChangesSaved={onChangesSaved} />;
     default:
       return <div>Unknown module type</div>;
   }
@@ -233,7 +236,7 @@ export const ModuleDetails = ({ productId, moduleId }: { productId: string, modu
 
   const iframeSrc = product?.slug
     ? process.env.NODE_ENV === 'production'
-      ? `https://heimatinfo.web.app/live/${product.slug}/${moduleId}`
+      ? `${process.env.NEXT_PUBLIC_BASE_URL}.app/live/${product.slug}/${moduleId}`
       : `http://localhost:3000/live/${product.slug}/${moduleId}`
     : '';
 
@@ -264,7 +267,7 @@ export const ModuleDetails = ({ productId, moduleId }: { productId: string, modu
               </div>
 
               <div className='w-fit flex gap-4'>
-                <Button onClick={() => { navigator.clipboard.writeText(`https://heimatinfo.web.app/live/${product?.slug}/${moduleId}`); toast('Link in die Zwischenablage kopiert!', {description: `https://heimatinfo.web.app/live/${product?.slug}/${moduleId}`});}}>
+                <Button onClick={() => { navigator.clipboard.writeText(`${process.env.NEXT_PUBLIC_BASE_URL}/live/${product?.slug}/${moduleId}`); toast('Link in die Zwischenablage kopiert!', {description: `${process.env.NEXT_PUBLIC_BASE_URL}/live/${product?.slug}/${moduleId}`});}}>
                   <FaRegClone />Link Kopieren
                 </Button>
                 <Button variant='secondary' onClick={() => setOpenSettingsDialog(true)}>Einstellungen</Button>

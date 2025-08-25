@@ -8,7 +8,7 @@ import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger } from './ui/select';
 import { Progress } from './ui/progress';
 import { Button } from './ui/button';
-import { FaOutdent, FaMapLocationDot, FaFilePdf, FaClock, FaClipboardList, FaGear, FaChevronLeft, FaTablet, FaPhone, FaPeopleGroup, FaGripVertical } from "react-icons/fa6";
+import { FaOutdent, FaMapLocationDot, FaFilePdf, FaClock, FaClipboardList, FaGear, FaChevronLeft, FaTablet, FaPhone, FaPeopleGroup, FaGripVertical, FaCopy } from "react-icons/fa6";
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
 import { Textarea } from './ui/textarea';
@@ -183,6 +183,7 @@ export const ModuleDialog = ({ isOpen, onClose, productId, refreshModules }: { i
                   <SelectItem value='Offnungszeiten'>Öffnungszeiten</SelectItem>
                   <SelectItem value='Formular-Modul'>Formular Modul</SelectItem>
                   <SelectItem value='Kontakt-Modul'>Kontakt Modul</SelectItem>
+                  <SelectItem value='Link-Modul'>Link Modul</SelectItem>
                   {(userEmail?.endsWith('@cosmema.de') || userEmail?.endsWith('@heimat-info.de')) && (
                     <>
                       <SelectItem value='Beteiligungs-Modul'>Beteiligungs Modul</SelectItem>
@@ -603,6 +604,8 @@ export const ProductModules = ({ productId }: { productId: string }) => {
         return <FaPeopleGroup />;
       case 'Kontakt-Modul':
         return <FaPhone />;
+      case 'Link-Modul':
+        return <FaCopy />;
       default:
         return null;
     }

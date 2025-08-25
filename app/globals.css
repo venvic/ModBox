@@ -42,40 +42,41 @@
   }
 
   [data-theme="cosmema"] {
-    --background: 203 44% 3%;
-    --foreground: 203 23% 100%;
-    --muted: 23 10% 9%;
-    --muted-foreground: 23 11% 66%;
-    --popover: 203 44% 3%;
-    --popover-foreground: 203 23% 100%;
-    --card: 203 44% 3%;
-    --card-foreground: 203 23% 100%;
-    --border: 203 3% 14%;
-    --input: 203 3% 14%;
-    --primary: 203 18% 56%;
-    --primary-foreground: 0 0% 0%;
-    --secondary: 23 18% 56%;
-    --secondary-foreground: 0 0% 0%;
-    --accent: 23 18% 56%;
-    --accent-foreground: 0 0% 0%;
-    --destructive: 15 90% 46%;
-    --destructive-foreground: 0 0% 100%;
-    --ring: 203 18% 56%;
-    --chart-1: 203 18% 56%;
-    --chart-2: 23 18% 56%;
-    --chart-3: 23 18% 56%;
-    --chart-4: 23 18% 59%;
-    --chart-5: 203 21% 56%;
-    --radius: 0.5rem;
-
-    --sidebar-background: 203 44% 3%;
-    --sidebar-foreground:  203 23% 100%;
-    --sidebar-primary: 30 70% 50%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 30 60% 50%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 30 20% 80%;
-    --sidebar-ring: 30 50% 60%;
+    --radius-sm: calc(0.625rem - 4px);
+    --radius-md: calc(0.625rem - 2px);
+    --radius-lg: 0.625rem;
+    --radius-xl: calc(0.625rem + 4px);
+    --color-background: #0a1725;
+    --color-foreground: #eeeeee;
+    --color-card: #0f2032;
+    --color-card-foreground: #eeeeee;
+    --color-popover: #0f2032;
+    --color-popover-foreground: #eeeeee;
+    --color-primary: #fe6d01;
+    --color-primary-foreground: #0a1725;
+    --color-secondary: #0f2032;
+    --color-secondary-foreground: #eeeeee;
+    --color-muted: #0f2032;
+    --color-muted-foreground: #cccccc;
+    --color-accent: #fe6d01;
+    --color-accent-foreground: #0a1725;
+    --color-destructive: #ff4c4c;
+    --color-border: #eeeeee20;
+    --color-input: #eeeeee30;
+    --color-ring: #fe6d01;
+    --color-chart-1: #fe6d01;
+    --color-chart-2: #ff9f40;
+    --color-chart-3: #ffd580;
+    --color-chart-4: #ff7300;
+    --color-chart-5: #ffb266;
+    --color-sidebar: #0f2032;
+    --color-sidebar-foreground: #eeeeee;
+    --color-sidebar-primary: #fe6d01;
+    --color-sidebar-primary-foreground: #0a1725;
+    --color-sidebar-accent: #0f2032;
+    --color-sidebar-accent-foreground: #eeeeee;
+    --color-sidebar-border: #eeeeee20;
+    --color-sidebar-ring: #fe6d01;
   }
 
   [data-theme="minimal"] {

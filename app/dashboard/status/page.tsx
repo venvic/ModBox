@@ -37,7 +37,7 @@ export default function Page() {
                 <h1 className='flex gap-2 items-center'><Check className='h-4 w-4'/> Alle Systeme in Betrieb</h1>
             </div>
 
-            <h2 className='mt-12'>Aktueller Status: heimatinfo.web.app</h2>
+            <h2 className='mt-12'>Aktueller Status: {process.env.NEXT_PUBLIC_BASE_URL}</h2>
 
             <div className='mt-4 grid grid-cols-1 md:grid-cols-2 divide-y divide-x border min-h-24 bg-accent rounded'>
                 <div className='w-full h-full py-6 px-6 flex justify-between'>

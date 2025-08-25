@@ -69,7 +69,7 @@ async function fetchStatisticsData() {
   });
   const totalModules = combinedData.reduce((acc, product) => acc + product.modulesCount, 0);
 
-  const response = await fetch('https://heimatinfo.web.app/api/getProjectInsights');
+  const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/getProjectInsights`);
   const data = await response.json();
   if (data.error) {
     throw new Error(`Error fetching Firestore metrics: ${data.error}`);
@@ -98,7 +98,7 @@ async function fetchProductModulesCount() {
 
 async function fetchProductPageViews() {
   try {
-    const response = await fetch('https://heimatinfo.web.app/api/getPageViews');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/getPageViews`);
     const data = await response.json();
     if (data.error) {
       throw new Error(`Error fetching page views: ${data.error}`);

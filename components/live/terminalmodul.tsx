@@ -253,7 +253,7 @@ const TerminalModule: React.FC<TerminalProps> = ({ product, module }) => {
                   />
                 </div>
               )}
-              <a href={`https://heimatinfo.web.app/live/${product.slug}/${module.id}`} className="font-bold select-none text-lg">{module.name}</a>
+              <a href={`${process.env.NEXT_PUBLIC_BASE_URL}/live/${product.slug}/${module.id}`} className="font-bold select-none text-lg">{module.name}</a>
               {settings.topBarLogos[1] && (
                 <div className="h-8 w-8 ml-auto relative">
                   <Image

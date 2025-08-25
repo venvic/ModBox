@@ -12,6 +12,7 @@ import { Analytics, logEvent } from 'firebase/analytics';
 import Terminalmodul from './terminalmodul';
 import Kontaktmodul from './kontaktmodul';
 import Beteiligungsmodul from './beteiligung';
+import Linkmodul from './linkModul';
 
 if (!getApps().length) {
   initializeApp(firebaseConfig);
@@ -102,6 +103,7 @@ const SlugController = ({ slug, moduleId }: { slug: string, moduleId: string }) 
                     {module && module.type === 'Kontakt-Modul' && <Kontaktmodul product={product} module={module} />}
                     {module && module.type === 'Beteiligungs-Modul' && <Beteiligungsmodul product={product} module={module} />}
                     {module && module.type === 'Terminal-Modul' && <Terminalmodul product={product} module={module} />}
+                    {module && module.type === 'Link-Modul' && <Linkmodul product={product} module={module} />}
                     {!module && <h1 className='text-foreground'></h1>}
                 </>
             )}
