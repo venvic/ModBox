@@ -236,7 +236,7 @@ export const ModuleDetails = ({ productId, moduleId }: { productId: string, modu
 
   const iframeSrc = product?.slug
     ? process.env.NODE_ENV === 'production'
-      ? `${process.env.NEXT_PUBLIC_BASE_URL}.app/live/${product.slug}/${moduleId}`
+      ? `${process.env.NEXT_PUBLIC_BASE_URL}/live/${product.slug}/${moduleId}`
       : `http://localhost:3000/live/${product.slug}/${moduleId}`
     : '';
 
